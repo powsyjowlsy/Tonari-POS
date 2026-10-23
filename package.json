@@ -1,0 +1,28 @@
+{
+  "name": "tonari-pos-desktop",
+  "version": "1.0.0",
+  "description": "Standalone Tablet, Desktop and Mobile POS Software for Tonari",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "server": "node server.js",
+    "dist": "electron-builder --win portable"
+  },
+  "author": "John Laurence T. Denore, Jed Clark V. Razo, Julz Brian L. Torralba",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^33.4.11",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "com.tonari.pos",
+    "productName": "Tonari POS",
+    "win": {
+      "target": "portable",
+      "icon": "renderer/assets/icon.ico"
+    },
+    "directories": {
+      "output": "dist"
+    }
+  }
+}

@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>TONARI - Point of Sale System</title>
+  <link rel="stylesheet" href="css/pos-theme.css">
+  <link rel="stylesheet" href="css/mobile-layout.css">
+</head>
+<body>
+
+  <!-- Viewport Container (Supports Desktop, Tablet, and Mobile Simulations) -->
+  <div id="app-viewport-wrapper">
+
+    <!-- Top Application Header -->
+    <header class="pos-header">
+      <div class="brand-section">
+        <span class="stall-logo-badge">TONARI</span>
+        <span class="stall-title">Point of Sale</span>
+      </div>
+
+      <!-- Live Interactive Viewport Mode Switcher -->
+      <div class="viewport-switcher">
+        <span class="viewport-label">Device:</span>
+        <button class="viewport-pill active" data-mode="auto" title="Responsive Auto Mode">Auto</button>
+        <button class="viewport-pill" data-mode="desktop" title="Simulate 1280px Desktop Screen">Desktop</button>
+        <button class="viewport-pill" data-mode="tablet" title="Simulate 1024px Tablet Screen">Tablet</button>
+        <button class="viewport-pill" data-mode="mobile" title="Simulate 390px Mobile Phone">Mobile</button>
+      </div>
+
+      <!-- Header Metadata & Live Network Link -->
+      <div class="header-meta">
+        <span id="mobile-network-link" class="network-pill" title="Open this link on your smartphone to test mobile mode">Mobile Wi-Fi: Loading...</span>
+        <span class="cashier-badge">Staff Lane 1</span>
+        <span id="header-live-clock" class="live-clock">--:--:--</span>
+      </div>
+    </header>
+
+    <!-- Desktop Main Navigation Bar -->
+    <nav class="desktop-nav-bar">
+      <button class="desktop-nav-tab active" data-view="pos">POS Cashier</button>
+      <button class="desktop-nav-tab" data-view="kitchen">Kitchen Queue (KDS)</button>
+      <button class="desktop-nav-tab" data-view="inventory">Inventory Stock</button>
+      <button class="desktop-nav-tab" data-view="sales">Sales &amp; Z-Reading</button>
+    </nav>
+
+    <!-- Main Workspace Container -->
+    <main class="app-view-container">
+
+      <!-- ==============================================================
+           VIEW 1: POS CASHIER ORDER ENTRY
+           ============================================================== -->
+      <section id="view-pos" class="app-view-panel active">
+        <div class="pos-layout">
+
+          <!-- Left Catalog Section -->
+          <div class="catalog-section">
+            <div class="catalog-toolbar">
+              <div class="search-wrapper">
+                <input type="text" id="pos-search-input" class="search-input" placeholder="Search menu items (e.g. Takoyaki, Curry, Soda)...">
+              </div>
+            </div>
+
+            <!-- Horizontal Category Navigation -->
+            <div id="category-pills-nav" class="category-rail">
+              <!-- Dynamically populated by pos.js -->
+            </div>
+
+            <!-- Product Grid -->
+            <div class="product-grid-container">
+              <div id="product-catalog-grid" class="product-grid">
+                <!-- Dynamically populated by pos.js -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Order Cart Panel (Desktop & Tablet) -->
+          <div class="cart-section desktop-cart-panel">
+            <div class="cart-header">
+              <span id="desktop-order-id-label" class="cart-order-title">Current Order</span>
+              <div class="order-type-switch">
+                <button class="btn-order-type active" data-type="Dine-In">Dine-In</button>
+                <button class="btn-order-type" data-type="Take-Out">Take-Out</button>
+              </div>
+            </div>
+
+            <!-- Itemized List -->
+            <div id="cart-items-list" class="cart-items-container">
+              <!-- Dynamically populated by pos.js -->
+            </div>
+
+            <!-- Financial Summary & Actions -->
+            <div class="cart-summary-footer">
+              <div class="cart-summary-row">
+                <span>Subtotal (<span class="cart-total-items-val">0 items</span>)</span>
+                <span class="cart-subtotal-val tabular-price">PHP 0.00</span>
+              </div>
+
+              <div class="cart-discount-controls">
+                <label for="cart-discount-select" class="text-sub font-small">Discount:</label>
+                <select id="cart-discount-select" class="discount-select">
+                  <option value="none">None (Standard)</option>
+                  <option value="student">Student Discount (5%)</option>
+                  <option value="pwd_senior">Senior / PWD (20%)</option>
+                </select>
+                <span class="cart-discount-val tabular-price text-sub">-PHP 0.00</span>
+              </div>
+
+              <div class="cart-total-row">
+                <span class="total-label">TOTAL DUE:</span>
+                <span class="cart-total-val tabular-price">PHP 0.00</span>
+              </div>
+
+              <div class="cart-action-buttons">
+                <button class="btn-clear-cart">Clear</button>
+                <button class="btn-proceed-checkout" disabled>Cart is Empty</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ==============================================================
+           VIEW 2: KITCHEN DISPLAY SYSTEM (KDS)
+           ============================================================== -->
+      <section id="view-kitchen" class="app-view-panel">
+        <div class="kitchen-view-container">
+          <div class="kds-toolbar">
+            <div>
+              <span class="kds-title">Kitchen Order Queue</span>
+              <span id="kds-active-count" class="kds-active-count">0 active tickets</span>
+            </div>
+            <div class="kds-filters">
+              <button class="kds-filter-btn active" data-filter="active">Active Orders</button>
+              <button class="kds-filter-btn" data-filter="all">All Today</button>
+            </div>
+          </div>
+
+          <div id="kitchen-cards-container" class="kds-grid">
+            <!-- Dynamically populated by kitchen.js -->
+          </div>
+        </div>
+      </section>
+
+      <!-- ==============================================================
+           VIEW 3: INVENTORY MANAGEMENT
+           ============================================================== -->
+      <section id="view-inventory" class="app-view-panel">
+        <div class="inventory-view-container">
+          <div id="inventory-alert-banner" class="inventory-alert-banner">
+            <!-- Low-stock warnings injected here -->
+          </div>
+
+          <div class="inventory-toolbar">
+            <div class="search-wrapper" style="max-width: 320px;">
+              <input type="text" id="inventory-search-input" class="search-input" placeholder="Filter by product name or ID...">
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <label for="inventory-category-select" class="font-small font-bold">Category:</label>
+              <select id="inventory-category-select" class="discount-select" style="padding: 6px 12px;">
+                <option value="all">All Categories</option>
+                <option value="curry">Katsu Curry</option>
+                <option value="takoyaki">Takoyaki</option>
+                <option value="ramen">Ramen</option>
+                <option value="gyoza">Gyoza</option>
+                <option value="wings">Ninja Wings</option>
+                <option value="soda">Fruit Soda</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="inventory-table-container">
+            <table class="pos-table">
+              <thead>
+                <tr>
+                  <th>Item Code</th>
+                  <th>Product Name</th>
+                  <th>Category</th>
+                  <th>Unit Price</th>
+                  <th>Current Stock</th>
+                  <th>Min Alert</th>
+                  <th>Stock Status</th>
+                  <th>Quick Restock</th>
+                </tr>
+              </thead>
+              <tbody id="inventory-table-body">
+                <!-- Dynamically populated by inventory.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==============================================================
+           VIEW 4: SALES ANALYTICS & Z-READING
+           ============================================================== -->
+      <section id="view-sales" class="app-view-panel">
+        <div class="sales-view-container">
+          <!-- Summary Metric Cards -->
+          <div class="kpi-cards-grid">
+            <div class="kpi-card">
+              <div class="kpi-title">Gross Sales Today</div>
+              <div id="kpi-total-sales" class="kpi-metric-val tabular-price">PHP 0.00</div>
+              <div class="kpi-desc">Total completed receipts</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-title">Transactions Count</div>
+              <div id="kpi-trans-count" class="kpi-metric-val">0 orders</div>
+              <div id="kpi-voided-count" class="kpi-desc">0 voided</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-title">Average Order Value</div>
+              <div id="kpi-avg-order" class="kpi-metric-val tabular-price">PHP 0.00</div>
+              <div class="kpi-desc">Mean revenue per customer</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-title">Payment Split</div>
+              <div id="kpi-payment-breakdown" class="kpi-desc font-bold" style="font-size: 13px; color: var(--text-main); margin-top: 6px;">
+                Cash: PHP 0.00 | GCash: PHP 0.00
+              </div>
+              <div class="kpi-desc" style="margin-top: 4px;">Audited breakdown</div>
+            </div>
+          </div>
+
+          <!-- Split Table View -->
+          <div class="sales-main-split">
+            <!-- Left: Transaction Ledger -->
+            <div class="sales-ledger-card">
+              <div class="section-header-row">
+                <span class="section-heading">Daily Sales Ledger</span>
+                <div style="display: flex; gap: 8px;">
+                  <input type="text" id="sales-search-input" class="search-input" placeholder="Search order ID..." style="max-width: 160px;">
+                  <button id="btn-export-csv" class="btn-export-csv">Export Sales to CSV</button>
+                </div>
+              </div>
+
+              <div style="overflow-x: auto;">
+                <table class="pos-table">
+                  <thead>
+                    <tr>
+                      <th>Order ID</th>
+                      <th>Time</th>
+                      <th>Type</th>
+                      <th>Items Summary</th>
+                      <th>Amount</th>
+                      <th>Payment</th>
+                      <th>Status</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="sales-ledger-body">
+                    <!-- Dynamically populated by sales.js -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Right: Top Selling Products -->
+            <div class="top-selling-card">
+              <div class="section-header-row">
+                <span class="section-heading">Top-Selling Items</span>
+              </div>
+              <div id="top-selling-items-container">
+                <!-- Dynamically populated by sales.js -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- ==============================================================
+         MOBILE-SPECIFIC ELEMENTS (Bottom Peek Bar, Drawer, Bottom Nav)
+         ============================================================== -->
+
+    <!-- Mobile Persistent Bottom Peek Bar -->
+    <div id="mobile-cart-peek-bar" class="mobile-cart-peek-bar">
+      <div class="mobile-peek-left">
+        <span id="mobile-peek-items-count" class="mobile-peek-badge">0 Items</span>
+        <span id="mobile-peek-total-amount" class="mobile-peek-total tabular-price">PHP 0.00</span>
+      </div>
+      <span class="mobile-peek-action">View Cart &amp; Pay &rarr;</span>
+    </div>
+
+    <!-- Mobile Slide-Up Cart Drawer Sheet -->
+    <div id="mobile-cart-drawer" class="mobile-cart-drawer">
+      <div class="mobile-cart-header">
+        <span class="mobile-cart-title">Order Cart Summary</span>
+        <button id="btn-close-mobile-cart" class="btn-close-mobile-cart">&times; Close</button>
+      </div>
+
+      <div style="padding: 10px 16px; background-color: var(--bg-subtle); border-bottom: 1px solid var(--border-light);">
+        <div class="order-type-switch" style="width: 100%;">
+          <button class="btn-order-type active" data-type="Dine-In" style="flex: 1;">Dine-In</button>
+          <button class="btn-order-type" data-type="Take-Out" style="flex: 1;">Take-Out</button>
+        </div>
+      </div>
+
+      <div id="mobile-cart-items-list" class="cart-items-container">
+        <!-- Replicated cart items -->
+      </div>
+
+      <div class="cart-summary-footer">
+        <div class="cart-summary-row">
+          <span>Subtotal:</span>
+          <span class="cart-subtotal-val tabular-price">PHP 0.00</span>
+        </div>
+        <div class="cart-total-row">
+          <span class="total-label">TOTAL:</span>
+          <span class="cart-total-val tabular-price">PHP 0.00</span>
+        </div>
+        <div class="cart-action-buttons">
+          <button class="btn-clear-cart">Clear</button>
+          <button class="btn-proceed-checkout" disabled>Cart is Empty</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Persistent Bottom Navigation Bar -->
+    <nav class="mobile-bottom-nav">
+      <button class="mobile-nav-btn active" data-view="pos">
+        <span>Catalog</span>
+      </button>
+      <button class="mobile-nav-btn" data-view="kitchen">
+        <span>Kitchen</span>
+      </button>
+      <button class="mobile-nav-btn" data-view="inventory">
+        <span>Stock</span>
+      </button>
+      <button class="mobile-nav-btn" data-view="sales">
+        <span>Reports</span>
+      </button>
+    </nav>
+
+  </div>
+
+  <!-- ==============================================================
+       MODAL 1: CHECKOUT & PAYMENT TENDER MODAL
+       ============================================================== -->
+  <div id="payment-modal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <span class="modal-title">Payment &amp; Checkout</span>
+      </div>
+
+      <div class="modal-body">
+        <!-- Due Banner -->
+        <div class="due-banner">
+          <div class="due-title">TOTAL AMOUNT DUE</div>
+          <div id="checkout-due-amount" class="due-amount tabular-price">PHP 0.00</div>
+          <div id="checkout-items-count" class="text-sub font-small">0 items</div>
+          <div id="checkout-discount-info" class="text-sub font-small" style="margin-top: 2px;"></div>
+        </div>
+
+        <!-- Payment Method Selector Tabs -->
+        <div class="payment-tabs">
+          <button class="payment-tab-btn active" data-method="Cash">Cash Payment</button>
+          <button class="payment-tab-btn" data-method="GCash">GCash Payment</button>
+        </div>
+
+        <!-- Cash Payment Panel -->
+        <div id="cash-payment-panel">
+          <div class="quick-cash-row">
+            <button class="btn-quick-cash" data-val="exact">Exact Amount</button>
+            <button class="btn-quick-cash" data-val="50">PHP 50</button>
+            <button class="btn-quick-cash" data-val="100">PHP 100</button>
+            <button class="btn-quick-cash" data-val="200">PHP 200</button>
+            <button class="btn-quick-cash" data-val="500">PHP 500</button>
+            <button class="btn-quick-cash" data-val="1000">PHP 1,000</button>
+          </div>
+
+          <div class="tendered-field-group">
+            <label class="field-label">Amount Tendered:</label>
+            <input type="text" id="tendered-input" class="tendered-input-display tabular-price" readonly value="PHP 0.00">
+          </div>
+
+          <!-- Touch Numeric Keypad -->
+          <div class="keypad-grid">
+            <button class="btn-keypad" data-key="1">1</button>
+            <button class="btn-keypad" data-key="2">2</button>
+            <button class="btn-keypad" data-key="3">3</button>
+            <button class="btn-keypad" data-key="4">4</button>
+            <button class="btn-keypad" data-key="5">5</button>
+            <button class="btn-keypad" data-key="6">6</button>
+            <button class="btn-keypad" data-key="7">7</button>
+            <button class="btn-keypad" data-key="8">8</button>
+            <button class="btn-keypad" data-key="9">9</button>
+            <button class="btn-keypad" data-key=".">.</button>
+            <button class="btn-keypad" data-key="0">0</button>
+            <button class="btn-keypad" data-key="clear">Clear</button>
+          </div>
+
+          <div class="change-display-box">
+            <span class="font-bold">Change Due:</span>
+            <span id="change-amount-display" class="change-val tabular-price text-danger">PHP 0.00</span>
+          </div>
+        </div>
+
+        <!-- GCash Payment Panel -->
+        <div id="gcash-payment-panel" style="display: none;">
+          <div style="background-color: var(--bg-subtle); padding: 12px; border-radius: 6px; margin-bottom: 14px; border: 1px solid var(--border-medium); font-size: 13px;">
+            <div style="font-weight: 700; margin-bottom: 4px;">Tonari Official GCash Account</div>
+            <div class="font-mono">Account Name: TONARI TIBANGA</div>
+            <div class="font-mono">Mobile Number: 0961-640-4472</div>
+          </div>
+
+          <div class="tendered-field-group">
+            <label for="gcash-ref-input" class="field-label">13-Digit GCash Reference Number:</label>
+            <input type="text" id="gcash-ref-input" class="search-input" placeholder="e.g. 1002938475892" style="font-size: 15px; padding: 10px; font-family: var(--font-mono);">
+            <div class="text-sub font-small" style="margin-top: 4px;">Enter the reference number from the customer's successful GCash receipt.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button id="btn-cancel-checkout" class="btn-secondary">Cancel</button>
+        <button id="btn-confirm-payment" class="btn-primary" disabled>Complete Order</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==============================================================
+       MODAL 2: 58MM THERMAL RECEIPT MODAL
+       ============================================================== -->
+  <div id="receipt-modal" class="modal-overlay">
+    <div class="modal-box" style="max-width: 380px;">
+      <div class="modal-header">
+        <span class="modal-title">Customer Receipt</span>
+      </div>
+
+      <div class="modal-body" style="background-color: #E5E7EB; display: flex; justify-content: center; padding: 12px;">
+        <div class="receipt-paper-box">
+          <pre id="receipt-thermal-paper" class="receipt-paper"></pre>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button id="btn-close-receipt" class="btn-secondary">New Order</button>
+        <button id="btn-print-receipt" class="btn-primary">Print Receipt</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==============================================================
+       MODAL 3: INVENTORY EDIT MODAL
+       ============================================================== -->
+  <div id="inventory-edit-modal" class="modal-overlay">
+    <div class="modal-box" style="max-width: 420px;">
+      <div class="modal-header">
+        <span class="modal-title">Edit Inventory Item</span>
+      </div>
+
+      <div class="modal-body">
+        <div style="margin-bottom: 12px;">
+          <div id="edit-item-name" style="font-size: 16px; font-weight: 800;"></div>
+          <div id="edit-item-id" class="font-mono text-sub font-small"></div>
+        </div>
+
+        <div style="margin-bottom: 12px;">
+          <label for="edit-item-price" class="field-label">Unit Price (PHP):</label>
+          <input type="number" id="edit-item-price" class="search-input" step="0.50" min="0">
+        </div>
+
+        <div style="margin-bottom: 12px;">
+          <label for="edit-item-threshold" class="field-label">Minimum Stock Alert Threshold:</label>
+          <input type="number" id="edit-item-threshold" class="search-input" step="1" min="1">
+          <div class="text-sub font-small" style="margin-top: 4px;">A warning badge triggers when stock drops below this quantity.</div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button id="btn-close-edit-modal" class="btn-secondary">Cancel</button>
+        <button id="btn-save-edit-modal" class="btn-primary">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Application Logic Scripts -->
+  <script src="js/data.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/receipt.js"></script>
+  <script src="js/checkout.js"></script>
+  <script src="js/kitchen.js"></script>
+  <script src="js/inventory.js"></script>
+  <script src="js/sales.js"></script>
+  <script src="js/pos.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
