@@ -412,9 +412,15 @@
               </div>
             </div>
 
-            <!-- Master Inventory Table -->
-            <div class="inventory-table-container">
-              <div class="table-section-title">Current Product Stock &amp; Alert Thresholds</div>
+            <!-- Inventory Sub-Navigation Segment Tabs -->
+            <div class="inventory-segment-nav" style="margin-bottom: 16px; display: flex; gap: 8px;">
+              <button type="button" id="btn-tab-inv-products" class="inv-segment-btn active">Menu Item Portions (14)</button>
+              <button type="button" id="btn-tab-inv-ingredients" class="inv-segment-btn">Raw Ingredients &amp; Supplies (31)</button>
+            </div>
+
+            <!-- Master Menu Item Portions Table -->
+            <div id="products-table-container" class="inventory-table-container">
+              <div class="table-section-title">Current Menu Item Portions &amp; Limiting Bottlenecks</div>
               <table class="pos-table">
                 <thead>
                   <tr>
@@ -422,13 +428,35 @@
                     <th>Product Name</th>
                     <th>Category</th>
                     <th>Unit Price</th>
-                    <th>Current Stock</th>
+                    <th>Available Portions</th>
                     <th>Min Alert</th>
                     <th>Stock Status</th>
-                    <th>Quick Restock</th>
+                    <th>Limiting Bottleneck</th>
                   </tr>
                 </thead>
                 <tbody id="inventory-table-body">
+                  <!-- Dynamically populated by inventory.js -->
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Raw Kitchen Ingredients & Packaging Supplies Table -->
+            <div id="ingredients-table-container" class="inventory-table-container" style="display: none;">
+              <div class="table-section-title">Raw Kitchen Ingredients &amp; Packaging Stock (Physical Inventory)</div>
+              <table class="pos-table">
+                <thead>
+                  <tr>
+                    <th>Code</th>
+                    <th>Ingredient / Supply Name</th>
+                    <th>Category</th>
+                    <th>Physical Stock</th>
+                    <th>Unit</th>
+                    <th>Min Threshold</th>
+                    <th>Stock Status</th>
+                    <th>Restock Supplies</th>
+                  </tr>
+                </thead>
+                <tbody id="ingredients-table-body">
                   <!-- Dynamically populated by inventory.js -->
                 </tbody>
               </table>
@@ -753,8 +781,9 @@
        ============================================================== -->
   <div id="inventory-edit-modal" class="modal-overlay">
     <div class="modal-box" style="max-width: 420px;">
-      <div class="modal-header">
+      <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
         <span class="modal-title">Edit Inventory Item</span>
+        <button type="button" class="modal-close-btn" id="btn-x-close-edit-modal" title="Close dialog">&times;</button>
       </div>
 
       <div class="modal-body">
@@ -787,8 +816,9 @@
        ============================================================== -->
   <div id="modifier-modal" class="modal-overlay">
     <div class="modal-box" style="max-width: 460px;">
-      <div class="modal-header">
+      <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
         <span class="modal-title">Select Flavor &amp; Options</span>
+        <button type="button" class="modal-close-btn" id="btn-x-close-modifier-modal" title="Close dialog">&times;</button>
       </div>
 
       <div class="modal-body">
@@ -815,8 +845,9 @@
        ============================================================== -->
   <div id="inventory-waste-modal" class="modal-overlay">
     <div class="modal-box" style="max-width: 480px;">
-      <div class="modal-header">
+      <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
         <span class="modal-title">Log Kitchen Waste / Dropped Food</span>
+        <button type="button" class="modal-close-btn" id="btn-x-close-waste-modal" title="Close dialog">&times;</button>
       </div>
 
       <div class="modal-body">

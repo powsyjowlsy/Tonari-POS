@@ -14,17 +14,45 @@ const InventoryController = {
     this.wasteModal = document.getElementById('inventory-waste-modal');
     this.wasteTableBody = document.getElementById('waste-log-table-body');
 
+    this.productsTableContainer = document.getElementById('products-table-container');
+    this.ingredientsTableContainer = document.getElementById('ingredients-table-container');
+    this.ingredientsTableBody = document.getElementById('ingredients-table-body');
+    this.btnTabProducts = document.getElementById('btn-tab-inv-products');
+    this.btnTabIngredients = document.getElementById('btn-tab-inv-ingredients');
+    this.currentSubTab = 'products';
+
     this.bindEvents();
     this.render();
 
     window.appStore.subscribe((event) => {
-      if (event === 'products-updated' || event === 'waste-logs-updated') {
+      if (event === 'products-updated' || event === 'waste-logs-updated' || event === 'ingredients-updated') {
         this.render();
       }
     });
   },
 
   bindEvents() {
+    // Sub-Tab Segment Switching
+    if (this.btnTabProducts && this.btnTabIngredients) {
+      this.btnTabProducts.addEventListener('click', () => {
+        this.currentSubTab = 'products';
+        this.btnTabProducts.classList.add('active');
+        this.btnTabIngredients.classList.remove('active');
+        if (this.productsTableContainer) this.productsTableContainer.style.display = 'block';
+        if (this.ingredientsTableContainer) this.ingredientsTableContainer.style.display = 'none';
+        this.render();
+      });
+
+      this.btnTabIngredients.addEventListener('click', () => {
+        this.currentSubTab = 'ingredients';
+        this.btnTabIngredients.classList.add('active');
+        this.btnTabProducts.classList.remove('active');
+        if (this.productsTableContainer) this.productsTableContainer.style.display = 'none';
+        if (this.ingredientsTableContainer) this.ingredientsTableContainer.style.display = 'block';
+        this.render();
+      });
+    }
+
     // Inventory search filter input
     const searchInput = document.getElementById('inventory-search-input');
     if (searchInput) {
@@ -50,6 +78,12 @@ const InventoryController = {
         this.closeEditModal();
       });
     }
+    const btnXCloseEdit = document.getElementById('btn-x-close-edit-modal');
+    if (btnXCloseEdit) {
+      btnXCloseEdit.addEventListener('click', () => {
+        this.closeEditModal();
+      });
+    }
 
     // Edit Item Modal save button
     const btnSaveEdit = document.getElementById('btn-save-edit-modal');
@@ -71,6 +105,12 @@ const InventoryController = {
     const btnCloseWaste = document.getElementById('btn-close-waste-modal');
     if (btnCloseWaste) {
       btnCloseWaste.addEventListener('click', () => {
+        this.closeWasteModal();
+      });
+    }
+    const btnXCloseWaste = document.getElementById('btn-x-close-waste-modal');
+    if (btnXCloseWaste) {
+      btnXCloseWaste.addEventListener('click', () => {
         this.closeWasteModal();
       });
     }
@@ -196,6 +236,7 @@ const InventoryController = {
   // --------------------------------------------------------------------------
   render() {
     this.renderProductsTable();
+    this.renderIngredientsTable();
     this.renderWasteLogsTable();
   },
 
@@ -239,7 +280,7 @@ const InventoryController = {
     if (products.length === 0) {
       this.tableBody.innerHTML = `
         <tr>
-          <td colspan="8" class="text-center py-4 text-sub">No inventory products found matching filters.</td>
+          <td colspan="8" class="text-center py-4 text-sub">No menu products found matching filters.</td>
         </tr>
       `;
       return;
@@ -249,11 +290,23 @@ const InventoryController = {
     products.forEach(p => {
       let statusBadge = '';
       if (p.stock === 0) {
-        statusBadge = '<span class="status-badge badge-out-of-stock">Out of Stock</span>';
+        statusBadge = '<span class="status-badge badge-out-of-stock">Sold Out</span>';
       } else if (p.stock <= p.minStock) {
         statusBadge = `<span class="status-badge badge-low-stock">Low Stock (${p.stock})</span>`;
       } else {
         statusBadge = `<span class="status-badge badge-in-stock">In Stock (${p.stock})</span>`;
+      }
+
+      // Compute limiting bottleneck ingredient from Recipe BOM
+      const bottleneck = typeof window.appStore.getBottleneckInfo === 'function'
+        ? window.appStore.getBottleneckInfo(p.id)
+        : null;
+
+      let bottleneckHtml = '';
+      if (bottleneck) {
+        bottleneckHtml = `<span class="bottleneck-tag" title="Bottleneck: ${bottleneck.name} (Requires ${bottleneck.reqQty} ${bottleneck.unit}/portion)">${bottleneck.name} (<span class="tabular-nums">${bottleneck.stock}&nbsp;${bottleneck.unit}</span> left)</span>`;
+      } else {
+        bottleneckHtml = '<span class="bottleneck-tag bottleneck-ok">Raw Supplies Plentiful</span>';
       }
 
       rowsHtml += `
@@ -262,34 +315,95 @@ const InventoryController = {
           <td><strong>${p.name}</strong></td>
           <td><span class="category-tag">${p.categoryName || p.category}</span></td>
           <td class="tabular-price">PHP ${p.price.toFixed(2)}</td>
-          <td class="tabular-price font-bold">${p.stock} units</td>
-          <td class="tabular-price text-sub">${p.minStock} units</td>
+          <td class="tabular-price font-bold">${p.stock}&nbsp;portions</td>
+          <td class="tabular-price text-sub">${p.minStock}&nbsp;portions</td>
+          <td>${statusBadge}</td>
+          <td>${bottleneckHtml}</td>
+        </tr>
+      `;
+    });
+
+    this.tableBody.innerHTML = rowsHtml;
+  },
+
+  // --------------------------------------------------------------------------
+  // Raw Ingredients & Packaging Supplies Table (31 Items)
+  // --------------------------------------------------------------------------
+  renderIngredientsTable() {
+    if (!this.ingredientsTableBody) return;
+
+    let ingredients = window.appStore.ingredients || [];
+
+    // Filter by search query
+    if (this.searchQuery) {
+      const q = this.searchQuery.toLowerCase();
+      ingredients = ingredients.filter(i => 
+        (i.name && i.name.toLowerCase().includes(q)) || 
+        (i.id && i.id.toLowerCase().includes(q)) || 
+        (i.category && i.category.toLowerCase().includes(q))
+      );
+    }
+
+    if (ingredients.length === 0) {
+      this.ingredientsTableBody.innerHTML = `
+        <tr>
+          <td colspan="8" class="text-center py-4 text-sub">No raw kitchen ingredients found matching filters.</td>
+        </tr>
+      `;
+      return;
+    }
+
+    let rowsHtml = '';
+    ingredients.forEach(ing => {
+      const stock = Number(ing.stock) || 0;
+      const minStock = Number(ing.minStock) || 0;
+      const unit = ing.unit || 'units';
+
+      let statusBadge = '';
+      if (stock <= 0) {
+        statusBadge = '<span class="status-badge badge-out-of-stock">Depleted (0)</span>';
+      } else if (stock <= minStock) {
+        statusBadge = `<span class="status-badge badge-low-stock">Low Stock (<span class="tabular-nums">${stock}</span>)</span>`;
+      } else {
+        statusBadge = `<span class="status-badge badge-in-stock">In Stock (<span class="tabular-nums">${stock}</span>)</span>`;
+      }
+
+      const isGramOrMl = unit === 'g' || unit === 'ml';
+      const step1 = isGramOrMl ? 500 : 25;
+      const step2 = isGramOrMl ? 1000 : 50;
+
+      rowsHtml += `
+        <tr>
+          <td class="font-mono text-sub font-bold">${ing.id}</td>
+          <td><strong>${ing.name}</strong></td>
+          <td><span class="category-tag">${ing.category}</span></td>
+          <td class="tabular-price font-bold">${stock.toLocaleString()}&nbsp;${unit}</td>
+          <td class="text-sub font-mono font-small">${unit}</td>
+          <td class="tabular-price text-sub">${minStock.toLocaleString()}&nbsp;${unit}</td>
           <td>${statusBadge}</td>
           <td>
-            <div class="inventory-actions">
-              <button class="btn-restock" data-id="${p.id}" data-amount="10">+10</button>
-              <button class="btn-restock" data-id="${p.id}" data-amount="25">+25</button>
-              <button class="btn-edit-item" data-id="${p.id}">Edit</button>
+            <div class="inventory-actions" style="display: flex; gap: 6px; align-items: center;">
+              <button type="button" class="btn-restock-ing" data-id="${ing.id}" data-amount="${step1}">+${step1}&nbsp;${unit}</button>
+              <button type="button" class="btn-restock-ing" data-id="${ing.id}" data-amount="${step2}">+${step2}&nbsp;${unit}</button>
             </div>
           </td>
         </tr>
       `;
     });
 
-    this.tableBody.innerHTML = rowsHtml;
+    this.ingredientsTableBody.innerHTML = rowsHtml;
 
-    // Attach event listeners for restock and edit buttons
-    this.tableBody.querySelectorAll('.btn-restock').forEach(btn => {
+    // Attach event listeners to raw ingredient restock buttons
+    this.ingredientsTableBody.querySelectorAll('.btn-restock-ing').forEach(btn => {
       btn.addEventListener('click', () => {
-        const prodId = btn.dataset.id;
-        const amount = parseInt(btn.dataset.amount, 10);
-        window.appStore.replenishStock(prodId, amount);
-      });
-    });
+        const ingId = btn.dataset.id;
+        const amount = parseFloat(btn.dataset.amount);
+        if (!ingId || isNaN(amount) || amount <= 0) return;
 
-    this.tableBody.querySelectorAll('.btn-edit-item').forEach(btn => {
-      btn.addEventListener('click', () => {
-        this.openEditModal(btn.dataset.id);
+        const success = window.appStore.replenishIngredient(ingId, amount);
+        if (success) {
+          this.render();
+        }
       });
     });
   },

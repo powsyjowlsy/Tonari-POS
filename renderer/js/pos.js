@@ -143,6 +143,12 @@ const PosController = {
         this.closeModifierModal();
       });
     }
+    const btnXCloseMod = document.getElementById('btn-x-close-modifier-modal');
+    if (btnXCloseMod) {
+      btnXCloseMod.addEventListener('click', () => {
+        this.closeModifierModal();
+      });
+    }
   },
 
   // --------------------------------------------------------------------------
@@ -150,6 +156,7 @@ const PosController = {
   // --------------------------------------------------------------------------
   openModifierModal(product) {
     this.selectedProductForModifier = product;
+    this.modifierModal = this.modifierModal || document.getElementById('modifier-modal');
     if (!this.modifierModal) return;
 
     document.getElementById('mod-product-name').textContent = product.name;
@@ -287,7 +294,7 @@ const PosController = {
       } else if (isLowStock) {
         stockBadge = `<span class="product-stock-badge stock-low badge badge-low">Low Stock (<span class="tabular-nums">${portions}</span>)</span>`;
       } else {
-        stockBadge = `<span class="product-stock-badge stock-ok badge badge-stock"><span class="tabular-nums">${portions}</span> in stock</span>`;
+        stockBadge = `<span class="product-stock-badge stock-ok badge badge-stock"><span class="tabular-nums">${portions}</span>&nbsp;in stock</span>`;
       }
 
       const hasModifiers = p.modifiers && p.modifiers.length > 0;
@@ -308,7 +315,7 @@ const PosController = {
           <div class="product-desc">${p.description}</div>
           <div class="product-footer">
             <span class="product-price tabular-price">PHP ${p.price.toFixed(2)}</span>
-            <button class="btn-add-item ${isOutOfStock ? 'disabled' : ''}" ${isOutOfStock ? 'disabled' : ''}>
+            <button type="button" class="btn-add-item ${isOutOfStock ? 'disabled' : ''}" ${isOutOfStock ? 'disabled' : ''}>
               ${isOutOfStock ? 'Sold Out' : (hasModifiers ? 'Customize' : 'Tap to Add')}
             </button>
           </div>
@@ -318,9 +325,12 @@ const PosController = {
 
     this.productGrid.innerHTML = html;
 
-    // Attach card click handlers with modifier gate and stock gating
+    // Attach card and button click handlers with modifier gate and stock gating
     this.productGrid.querySelectorAll('.product-card').forEach(card => {
-      card.addEventListener('click', () => {
+      const handleProductSelection = (e) => {
+        if (e) {
+          e.stopPropagation();
+        }
         const prodId = card.dataset.id;
         const prod = window.appStore.products.find(p => p.id === prodId);
         if (!prod) return;
@@ -348,7 +358,13 @@ const PosController = {
         } else {
           window.appStore.addToCart(prod);
         }
-      });
+      };
+
+      card.addEventListener('click', handleProductSelection);
+      const actionBtn = card.querySelector('.btn-add-item');
+      if (actionBtn) {
+        actionBtn.addEventListener('click', handleProductSelection);
+      }
     });
   },
 

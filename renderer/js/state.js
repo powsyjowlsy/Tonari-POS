@@ -401,6 +401,54 @@ class Store {
     return minPortions === Infinity ? 0 : Math.max(0, minPortions);
   }
 
+  getBottleneckInfo(productId) {
+    if (!productId) return null;
+    const recipe = this.recipes ? this.recipes[productId] : null;
+    if (!recipe || !Array.isArray(recipe) || recipe.length === 0) {
+      return null;
+    }
+
+    let minPortions = Infinity;
+    let limitingIngredient = null;
+    let reqPerPortion = 0;
+
+    for (const req of recipe) {
+      const reqQty = req.quantity !== undefined ? Number(req.quantity) : (req.reqQty !== undefined ? Number(req.reqQty) : 0);
+      if (isNaN(reqQty) || reqQty <= 0) continue;
+
+      const ing = this.ingredients.find(i => i.id === req.ingredientId);
+      if (!ing) {
+        return {
+          id: req.ingredientId,
+          name: 'Missing Supply',
+          stock: 0,
+          unit: 'units',
+          portions: 0
+        };
+      }
+
+      const currentStock = Math.max(0, Number(ing.stock) || 0);
+      const portions = Math.floor(currentStock / reqQty);
+
+      if (portions < minPortions) {
+        minPortions = portions;
+        limitingIngredient = ing;
+        reqPerPortion = reqQty;
+      }
+    }
+
+    if (!limitingIngredient) return null;
+
+    return {
+      id: limitingIngredient.id,
+      name: limitingIngredient.name,
+      stock: limitingIngredient.stock,
+      unit: limitingIngredient.unit || 'units',
+      portions: minPortions === Infinity ? 0 : minPortions,
+      reqQty: reqPerPortion
+    };
+  }
+
   refreshProductPortions() {
     if (!Array.isArray(this.products)) return;
     this.products.forEach(p => {
