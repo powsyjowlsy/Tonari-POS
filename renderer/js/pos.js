@@ -17,10 +17,12 @@ const PosController = {
     this.renderProducts();
     this.renderCart();
 
-    window.appStore.subscribe((event) => {
+    window.appStore.subscribe((event, payload) => {
       if (event === 'products-updated') {
         this.renderProducts();
         this.renderCart();
+      } else if (event === 'ingredients-updated') {
+        this.renderProducts();
       } else if (event === 'cart-updated' || event === 'order-type-changed') {
         this.renderCart();
       } else if (event === 'category-changed') {
@@ -29,9 +31,40 @@ const PosController = {
       } else if (event === 'search-changed') {
         this.renderProducts();
       } else if (event === 'cart-error') {
-        alert(event);
+        this.showCartNotification(payload || 'Cannot add item to cart: Insufficient stock.');
       }
     });
+  },
+
+  showCartNotification(msg) {
+    let toast = document.getElementById('pos-cart-toast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'pos-cart-toast';
+      toast.style.position = 'fixed';
+      toast.style.bottom = '20px';
+      toast.style.right = '20px';
+      toast.style.backgroundColor = 'var(--status-red, #B91C1C)';
+      toast.style.color = '#FFFFFF';
+      toast.style.padding = '10px 16px';
+      toast.style.borderRadius = '6px';
+      toast.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+      toast.style.zIndex = '9999';
+      toast.style.fontWeight = '600';
+      toast.style.fontSize = '13px';
+      toast.style.transition = 'opacity 0.2s ease';
+      document.body.appendChild(toast);
+    }
+    toast.textContent = msg;
+    toast.style.opacity = '1';
+    toast.style.display = 'block';
+    clearTimeout(this._toastTimer);
+    this._toastTimer = setTimeout(() => {
+      if (toast) {
+        toast.style.opacity = '0';
+        setTimeout(() => { if (toast) toast.style.display = 'none'; }, 200);
+      }
+    }, 3500);
   },
 
   bindEvents() {
@@ -148,9 +181,26 @@ const PosController = {
     const btnConfirmAdd = document.getElementById('btn-confirm-modifier-add');
     if (btnConfirmAdd) {
       btnConfirmAdd.onclick = () => {
+        const prod = this.selectedProductForModifier;
+        if (!prod) return;
+
+        const portions = typeof window.appStore.computeAvailablePortions === 'function'
+          ? window.appStore.computeAvailablePortions(prod.id)
+          : (prod.stock !== undefined ? prod.stock : 0);
+
+        const currentCartQty = window.appStore.cart
+          .filter(item => item.id === prod.id)
+          .reduce((sum, item) => sum + item.quantity, 0);
+
+        if (currentCartQty >= portions) {
+          window.appStore.notify('cart-error', `Cannot add more "${prod.name}". Maximum available portions (${portions}) already in cart.`);
+          this.closeModifierModal();
+          return;
+        }
+
         const activeOption = optionsContainer ? optionsContainer.querySelector('.modifier-option-btn.active') : null;
-        const selectedFlavor = activeOption ? activeOption.dataset.flavor : (product.modifiers ? product.modifiers[0] : null);
-        window.appStore.addToCart(this.selectedProductForModifier, selectedFlavor);
+        const selectedFlavor = activeOption ? activeOption.dataset.flavor : (prod.modifiers ? prod.modifiers[0] : null);
+        window.appStore.addToCart(prod, selectedFlavor);
         this.closeModifierModal();
       };
     }
@@ -223,16 +273,21 @@ const PosController = {
 
     let html = '';
     products.forEach(p => {
-      const isOutOfStock = p.stock <= 0;
-      const isLowStock = p.stock > 0 && p.stock <= p.minStock;
+      // Calculate real-time available portions using limiting bottleneck formula
+      const portions = typeof window.appStore.computeAvailablePortions === 'function'
+        ? window.appStore.computeAvailablePortions(p.id)
+        : (p.stock !== undefined ? p.stock : 0);
+
+      const isOutOfStock = portions <= 0;
+      const isLowStock = portions > 0 && portions <= (p.minStock || 5);
 
       let stockBadge = '';
       if (isOutOfStock) {
-        stockBadge = '<span class="product-stock-badge stock-out">Out of Stock</span>';
+        stockBadge = '<span class="product-stock-badge stock-out badge badge-sold-out">Sold Out</span>';
       } else if (isLowStock) {
-        stockBadge = `<span class="product-stock-badge stock-low">Low Stock (${p.stock})</span>`;
+        stockBadge = `<span class="product-stock-badge stock-low badge badge-low">Low Stock (<span class="tabular-nums">${portions}</span>)</span>`;
       } else {
-        stockBadge = `<span class="product-stock-badge stock-ok">${p.stock} in stock</span>`;
+        stockBadge = `<span class="product-stock-badge stock-ok badge badge-stock"><span class="tabular-nums">${portions}</span> in stock</span>`;
       }
 
       const hasModifiers = p.modifiers && p.modifiers.length > 0;
@@ -241,7 +296,7 @@ const PosController = {
         : '';
 
       html += `
-        <div class="product-card ${isOutOfStock ? 'card-disabled' : ''}" data-id="${p.id}">
+        <div class="product-card ${isOutOfStock ? 'card-disabled' : ''}" data-id="${p.id}" ${isOutOfStock ? 'aria-disabled="true"' : ''}>
           <div class="product-card-top">
             <span class="product-cat-tag">${p.categoryName || p.category}</span>
             <div style="display: flex; gap: 4px; align-items: center;">
@@ -263,17 +318,35 @@ const PosController = {
 
     this.productGrid.innerHTML = html;
 
-    // Attach card click handlers with modifier gate
+    // Attach card click handlers with modifier gate and stock gating
     this.productGrid.querySelectorAll('.product-card').forEach(card => {
       card.addEventListener('click', () => {
         const prodId = card.dataset.id;
         const prod = window.appStore.products.find(p => p.id === prodId);
-        if (prod && prod.stock > 0) {
-          if (prod.modifiers && prod.modifiers.length > 0) {
-            this.openModifierModal(prod);
-          } else {
-            window.appStore.addToCart(prod);
-          }
+        if (!prod) return;
+
+        const portions = typeof window.appStore.computeAvailablePortions === 'function'
+          ? window.appStore.computeAvailablePortions(prodId)
+          : (prod.stock !== undefined ? prod.stock : 0);
+
+        if (portions <= 0) {
+          window.appStore.notify('cart-error', `"${prod.name}" is currently sold out.`);
+          return;
+        }
+
+        const currentCartQty = window.appStore.cart
+          .filter(item => item.id === prodId)
+          .reduce((sum, item) => sum + item.quantity, 0);
+
+        if (currentCartQty >= portions) {
+          window.appStore.notify('cart-error', `Cannot add more "${prod.name}". All ${portions} available portion(s) are already in your cart.`);
+          return;
+        }
+
+        if (prod.modifiers && prod.modifiers.length > 0) {
+          this.openModifierModal(prod);
+        } else {
+          window.appStore.addToCart(prod);
         }
       });
     });

@@ -5,6 +5,8 @@
 const SalesController = {
   searchQuery: '',
   pendingVoidOrderId: null,
+  pinBuffer: '',
+  keyHandler: null,
 
   init() {
     this.tableBody = document.getElementById('sales-ledger-body');
@@ -83,6 +85,51 @@ const SalesController = {
         this.verifyAndExecuteVoid();
       });
     }
+
+    // Touch PIN Keypad Buttons (0-9, Clear/C, DEL/Backspace)
+    const keypad = document.getElementById('manager-touch-keypad');
+    if (keypad) {
+      keypad.addEventListener('click', (e) => {
+        const btn = e.target.closest('.btn-pin-key, .keypad-btn');
+        if (!btn) return;
+        const key = btn.dataset.pinKey || btn.dataset.key;
+        if (key) {
+          this.handlePinKeypress(key);
+        }
+      });
+    }
+
+    // Retained input listener (syncs Selenium send_keys and accessibility input)
+    const pinInput = document.getElementById('manager-pin-input');
+    if (pinInput) {
+      pinInput.addEventListener('input', (e) => {
+        const cleaned = e.target.value.replace(/\D/g, '').slice(0, 4);
+        this.pinBuffer = cleaned;
+        e.target.value = cleaned;
+        this.updatePinDots();
+      });
+    }
+
+    // Hardware Keyboard Dispatch for PIN Modal
+    window.addEventListener('keydown', (e) => {
+      if (!this.pinModal || !this.pinModal.classList.contains('modal-visible')) return;
+      if (e.key >= '0' && e.key <= '9') {
+        e.preventDefault();
+        this.handlePinKeypress(e.key);
+      } else if (e.key === 'Backspace') {
+        e.preventDefault();
+        this.handlePinKeypress('backspace');
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        this.closePinModal();
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        this.verifyAndExecuteVoid();
+      } else if (e.key === 'c' || e.key === 'C') {
+        e.preventDefault();
+        this.handlePinKeypress('clear');
+      }
+    });
   },
 
   // --------------------------------------------------------------------------
@@ -127,12 +174,17 @@ const SalesController = {
   // --------------------------------------------------------------------------
   promptVoidWithPin(orderId) {
     this.pendingVoidOrderId = orderId;
+    this.pinBuffer = '';
     const pinInput = document.getElementById('manager-pin-input');
     if (pinInput) pinInput.value = '';
     const errorText = document.getElementById('pin-error-text');
     if (errorText) errorText.style.display = 'none';
+    this.updatePinDots();
 
-    document.getElementById('pin-target-order-label').textContent = `Authorize Void for Order #${orderId}`;
+    const targetOrderLabel = document.getElementById('pin-target-order-label');
+    if (targetOrderLabel) {
+      targetOrderLabel.textContent = `Authorize Void for Order #${orderId}`;
+    }
 
     if (this.pinModal) {
       this.pinModal.classList.add('modal-visible');
@@ -145,19 +197,76 @@ const SalesController = {
       this.pinModal.classList.remove('modal-visible');
     }
     this.pendingVoidOrderId = null;
+    this.pinBuffer = '';
+    const pinInput = document.getElementById('manager-pin-input');
+    if (pinInput) pinInput.value = '';
+    this.updatePinDots();
+  },
+
+  handlePinKeypress(key) {
+    const errorText = document.getElementById('pin-error-text');
+    if (errorText) errorText.style.display = 'none';
+
+    if (key >= '0' && key <= '9') {
+      if (this.pinBuffer.length < 4) {
+        this.pinBuffer += key;
+      }
+    } else if (key === 'clear') {
+      this.pinBuffer = '';
+    } else if (key === 'backspace') {
+      this.pinBuffer = this.pinBuffer.slice(0, -1);
+    }
+
+    const pinInput = document.getElementById('manager-pin-input');
+    if (pinInput && pinInput.value !== this.pinBuffer) {
+      pinInput.value = this.pinBuffer;
+    }
+    this.updatePinDots();
+  },
+
+  updatePinDots() {
+    const dots = document.querySelectorAll('#manager-pin-dots .pin-dot, #pin-dots-container .pin-dot');
+    dots.forEach((dot, index) => {
+      dot.classList.toggle('filled', index < this.pinBuffer.length);
+    });
+    const container = document.getElementById('manager-pin-dots') || document.getElementById('pin-dots-container');
+    if (container) {
+      container.setAttribute('aria-label', `PIN entry progress: ${this.pinBuffer.length} of 4 digits entered`);
+    }
   },
 
   verifyAndExecuteVoid() {
     const pinInput = document.getElementById('manager-pin-input');
     const errorText = document.getElementById('pin-error-text');
-    const enteredPin = pinInput ? pinInput.value.trim() : '';
+    const enteredPin = (this.pinBuffer || (pinInput ? pinInput.value.trim() : '')).trim();
 
-    const isValid = window.appStore.verifyManagerPin(enteredPin);
+    let isValid = false;
+    if (window.appStore && window.appStore.verifyUserPin) {
+      const auth = window.appStore.verifyUserPin(enteredPin, 'Admin');
+      isValid = auth && auth.success;
+    }
+    if (!isValid && window.appStore && window.appStore.verifyManagerPin) {
+      isValid = window.appStore.verifyManagerPin(enteredPin);
+    }
+
     if (!isValid) {
       if (errorText) {
-        errorText.textContent = `Invalid 4-digit PIN (Attempts: ${window.appStore.failedPinAttempts}/3). Default is 1234.`;
+        const attempts = (window.appStore && window.appStore.failedPinAttempts !== undefined)
+          ? window.appStore.failedPinAttempts
+          : 1;
+        errorText.textContent = `Invalid 4-digit PIN (Attempts: ${attempts}/3). Default is 1234.`;
         errorText.style.display = 'block';
       }
+      const dotsContainer = document.getElementById('manager-pin-dots') || document.getElementById('pin-dots-container');
+      if (dotsContainer) {
+        dotsContainer.classList.remove('pin-shake', 'shake');
+        void dotsContainer.offsetWidth; // Force reflow
+        dotsContainer.classList.add('pin-shake', 'shake');
+        setTimeout(() => dotsContainer.classList.remove('pin-shake', 'shake'), 400);
+      }
+      this.pinBuffer = '';
+      if (pinInput) pinInput.value = '';
+      this.updatePinDots();
       return;
     }
 

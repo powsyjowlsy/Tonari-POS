@@ -274,14 +274,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   // 6. Viewport Simulation Manager (Desktop, Tablet, Mobile)
   // --------------------------------------------------------------------------
   const viewportWrapper = document.getElementById('app-viewport-wrapper');
-  const viewportPills = document.querySelectorAll('.viewport-pill');
 
   function setViewport(mode) {
-    window.appStore.setDeviceMode(mode);
-
-    viewportPills.forEach(pill => {
-      pill.classList.toggle('active', pill.dataset.mode === mode);
-    });
+    if (window.appStore && window.appStore.setDeviceMode) {
+      window.appStore.setDeviceMode(mode);
+    }
 
     if (!viewportWrapper) return;
     viewportWrapper.classList.remove('sim-desktop', 'sim-tablet', 'sim-mobile');
@@ -294,10 +291,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       viewportWrapper.classList.add('sim-mobile');
     }
   }
-
-  viewportPills.forEach(pill => {
-    pill.addEventListener('click', () => setViewport(pill.dataset.mode));
-  });
+  window.setAppViewport = setViewport;
 
   // --------------------------------------------------------------------------
   // 7. Mobile Cart Sheet Listener
@@ -312,30 +306,386 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   // --------------------------------------------------------------------------
-  // 8. Network Link Discovery (Mobile Wi-Fi Connection Link)
+  // 8. Hardware & Network Diagnostics Modal Controller
   // --------------------------------------------------------------------------
-  const mobileIpBanner = document.getElementById('mobile-network-link');
-  if (mobileIpBanner) {
+  const diagModal = document.getElementById('diagnostics-modal');
+  const btnOpenDiag = document.getElementById('btn-open-diagnostics');
+  const btnCloseDiag = document.getElementById('btn-close-diagnostics-modal');
+  const btnCopyDiagUrl = document.getElementById('btn-copy-network-url');
+
+  async function fetchAndRenderNetworkInfo() {
+    let localIp = '127.0.0.1';
+    let port = 3000;
+    let isConnected = false;
+
     if (window.posNative && window.posNative.getNetworkInfo) {
       try {
         const netInfo = await window.posNative.getNetworkInfo();
-        mobileIpBanner.textContent = `Mobile Wi-Fi: http://${netInfo.localIp}:${netInfo.port}`;
+        if (netInfo && netInfo.localIp) {
+          localIp = netInfo.localIp;
+          port = netInfo.port || 3000;
+          isConnected = true;
+        }
       } catch (e) {
-        mobileIpBanner.textContent = `Local: http://localhost:3000`;
+        console.warn('Native getNetworkInfo failed:', e);
       }
     } else if (window.location.protocol.startsWith('http')) {
-      fetch('/api/info')
-        .then(res => res.json())
-        .then(data => {
-          mobileIpBanner.textContent = `Mobile Wi-Fi: http://${data.localIp}:${data.port}`;
-        })
-        .catch(() => {
-          mobileIpBanner.textContent = `Local Port: 3000`;
-        });
+      try {
+        const res = await fetch('/api/info');
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.localIp) {
+            localIp = data.localIp;
+            port = data.port || window.location.port || 3000;
+            isConnected = true;
+          }
+        }
+      } catch (e) {
+        console.warn('HTTP /api/info fetch failed:', e);
+      }
     } else {
-      mobileIpBanner.textContent = `Local Server: Port 3000`;
+      localIp = 'localhost';
+      port = 3000;
+    }
+
+    const fullUrl = `http://${localIp}:${port}`;
+
+    const elUrl = document.getElementById('diag-server-url');
+    if (elUrl) elUrl.textContent = fullUrl;
+
+    const elIp = document.getElementById('diag-server-ip');
+    if (elIp) elIp.textContent = localIp;
+
+    const elPort = document.getElementById('diag-server-port');
+    if (elPort) elPort.textContent = String(port);
+
+    const elStatus = document.getElementById('diag-server-status');
+    if (elStatus) {
+      elStatus.textContent = isConnected ? 'Active LAN Server' : 'Local Standalone';
+      elStatus.className = isConnected ? 'diag-status-badge status-online' : 'diag-status-badge status-warning';
+    }
+
+    const mobileIpBanner = document.getElementById('mobile-network-link');
+    if (mobileIpBanner) {
+      mobileIpBanner.textContent = `Mobile Wi-Fi: ${fullUrl}`;
     }
   }
+
+  function openDiagnosticsModal() {
+    if (!diagModal) return;
+    fetchAndRenderNetworkInfo();
+
+    const elOrders = document.getElementById('diag-stat-orders');
+    if (elOrders && window.appStore && window.appStore.orders) {
+      elOrders.textContent = String(window.appStore.orders.length);
+    }
+    const elProducts = document.getElementById('diag-stat-products');
+    if (elProducts && window.appStore && window.appStore.products) {
+      elProducts.textContent = String(window.appStore.products.length);
+    }
+
+    diagModal.classList.add('modal-visible');
+  }
+
+  function closeDiagnosticsModal() {
+    if (diagModal) diagModal.classList.remove('modal-visible');
+  }
+
+  if (btnOpenDiag) btnOpenDiag.addEventListener('click', openDiagnosticsModal);
+  if (btnCloseDiag) btnCloseDiag.addEventListener('click', closeDiagnosticsModal);
+  if (btnCopyDiagUrl) {
+    btnCopyDiagUrl.addEventListener('click', () => {
+      const elUrl = document.getElementById('diag-server-url');
+      if (elUrl && elUrl.textContent) {
+        navigator.clipboard.writeText(elUrl.textContent).then(() => {
+          const orig = btnCopyDiagUrl.textContent;
+          btnCopyDiagUrl.textContent = 'Copied to Clipboard';
+          setTimeout(() => { btnCopyDiagUrl.textContent = orig; }, 2000);
+        }).catch(err => console.warn('Clipboard write failed:', err));
+      }
+    });
+  }
+  if (diagModal) {
+    diagModal.addEventListener('click', (e) => {
+      if (e.target === diagModal) closeDiagnosticsModal();
+    });
+  }
+
+  fetchAndRenderNetworkInfo();
+  window.openDiagnosticsModal = openDiagnosticsModal;
+  window.closeDiagnosticsModal = closeDiagnosticsModal;
+
+  // --------------------------------------------------------------------------
+  // 10. Staff Accounts & Cashier Session Switcher Controller (SRS RTM-FR-011)
+  // --------------------------------------------------------------------------
+  const StaffSessionController = {
+    selectedUserId: null,
+    currentPin: '',
+    modal: null,
+    keyHandler: null,
+
+    init() {
+      this.modal = document.getElementById('staff-switch-modal');
+      this.bindEvents();
+      this.updateSidebar();
+
+      if (window.appStore && window.appStore.subscribe) {
+        window.appStore.subscribe((event) => {
+          if (event === 'user-changed') {
+            this.updateSidebar();
+          }
+        });
+      }
+    },
+
+    getInitials(name) {
+      if (!name) return 'ST';
+      if (name === 'Staff Lane 1') return 'SL';
+      const parts = name.trim().split(/\s+/);
+      if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    },
+
+    updateSidebar() {
+      const user = (window.appStore && window.appStore.getCurrentUser)
+        ? window.appStore.getCurrentUser()
+        : { name: 'Staff Lane 1', role: 'Cashier' };
+
+      const avatarEl = document.getElementById('sidebar-user-avatar');
+      const nameEl = document.getElementById('sidebar-user-name');
+      const roleEl = document.getElementById('sidebar-user-role');
+
+      if (nameEl) nameEl.textContent = user.name;
+      if (avatarEl) avatarEl.textContent = this.getInitials(user.name);
+      if (roleEl) {
+        roleEl.textContent = user.role;
+        const role = (user.role || '').toLowerCase();
+        roleEl.className = 'user-role-badge ' + (
+          role === 'admin' ? 'badge-role-admin' :
+          role === 'kitchen' ? 'badge-role-kitchen' : 'badge-role-cashier'
+        );
+      }
+    },
+
+    openModal() {
+      if (!this.modal) return;
+      const users = (window.appStore && window.appStore.getUsers) 
+        ? window.appStore.getUsers() 
+        : [
+            { id: 'USR-001', name: 'Master Manager', role: 'Admin' },
+            { id: 'USR-002', name: 'Staff Lane 1', role: 'Cashier' },
+            { id: 'USR-003', name: 'Kitchen Chef', role: 'Kitchen' }
+          ];
+
+      const currentUser = (window.appStore && window.appStore.getCurrentUser)
+        ? window.appStore.getCurrentUser()
+        : users[1];
+
+      this.selectedUserId = currentUser ? currentUser.id : users[0].id;
+      this.renderUserCards(users);
+      this.updatePinDisplay('');
+
+      const errEl = document.getElementById('staff-pin-error-text');
+      if (errEl) errEl.style.display = 'none';
+
+      this.modal.classList.add('modal-visible');
+
+      if (!this.keyHandler) {
+        this.keyHandler = (e) => {
+          if (!this.modal || !this.modal.classList.contains('modal-visible')) return;
+          if (e.key >= '0' && e.key <= '9') {
+            e.preventDefault();
+            this.handleKeypadPress(e.key);
+          } else if (e.key === 'Backspace') {
+            e.preventDefault();
+            this.handleKeypadPress('backspace');
+          } else if (e.key === 'Escape') {
+            e.preventDefault();
+            this.closeModal();
+          } else if (e.key === 'Enter') {
+            e.preventDefault();
+            this.authenticateAndSwitch();
+          } else if (e.key === 'c' || e.key === 'C') {
+            e.preventDefault();
+            this.handleKeypadPress('clear');
+          }
+        };
+        window.addEventListener('keydown', this.keyHandler);
+      }
+    },
+
+    closeModal() {
+      if (!this.modal) return;
+      this.modal.classList.remove('modal-visible');
+      if (this.keyHandler) {
+        window.removeEventListener('keydown', this.keyHandler);
+        this.keyHandler = null;
+      }
+      this.updatePinDisplay('');
+    },
+
+    renderUserCards(users) {
+      const container = document.getElementById('staff-user-cards-container');
+      if (!container) return;
+
+      container.innerHTML = users.map(u => {
+        const isSelected = u.id === this.selectedUserId;
+        const role = (u.role || '').toLowerCase();
+        const roleClass = role === 'admin' ? 'badge-role-admin' :
+                          role === 'kitchen' ? 'badge-role-kitchen' : 'badge-role-cashier';
+        return `
+          <div class="staff-user-card ${isSelected ? 'selected' : ''}" data-id="${u.id}">
+            <div class="user-avatar-circle">${this.getInitials(u.name)}</div>
+            <div class="staff-user-name">${u.name}</div>
+            <div class="user-role-badge ${roleClass}">${u.role}</div>
+          </div>
+        `;
+      }).join('');
+
+      const selectedUser = users.find(u => u.id === this.selectedUserId);
+      const promptLabel = document.getElementById('staff-pin-prompt-label');
+      if (promptLabel && selectedUser) {
+        promptLabel.textContent = `Enter PIN for ${selectedUser.name}`;
+      }
+    },
+
+    selectUser(userId) {
+      this.selectedUserId = userId;
+      const users = (window.appStore && window.appStore.getUsers) ? window.appStore.getUsers() : [];
+      this.renderUserCards(users);
+      this.updatePinDisplay('');
+      const errEl = document.getElementById('staff-pin-error-text');
+      if (errEl) errEl.style.display = 'none';
+    },
+
+    updatePinDisplay(pin) {
+      this.currentPin = pin;
+      const pinInput = document.getElementById('staff-switch-pin-input');
+      if (pinInput && pinInput.value !== pin) pinInput.value = pin;
+
+      const dots = document.querySelectorAll('#staff-pin-dots .pin-dot');
+      dots.forEach((dot, idx) => {
+        dot.classList.toggle('filled', idx < pin.length);
+      });
+
+      const errEl = document.getElementById('staff-pin-error-text');
+      if (errEl) errEl.style.display = 'none';
+    },
+
+    handleKeypadPress(key) {
+      let pin = this.currentPin || '';
+      if (key === 'clear') {
+        pin = '';
+      } else if (key === 'backspace') {
+        pin = pin.slice(0, -1);
+      } else if (/^[0-9]$/.test(key)) {
+        if (pin.length < 4) {
+          pin += key;
+        }
+      }
+      this.updatePinDisplay(pin);
+    },
+
+    authenticateAndSwitch() {
+      const pinInput = document.getElementById('staff-switch-pin-input');
+      const enteredPin = (this.currentPin !== undefined && this.currentPin !== '')
+        ? this.currentPin
+        : (pinInput ? pinInput.value.trim() : '');
+
+      if (!enteredPin || enteredPin.length !== 4) {
+        const errEl = document.getElementById('staff-pin-error-text');
+        if (errEl) {
+          errEl.textContent = 'Please enter a 4-digit PIN.';
+          errEl.style.display = 'block';
+        }
+        return;
+      }
+
+      if (!window.appStore || !window.appStore.switchUser) {
+        console.warn('appStore.switchUser not available');
+        this.closeModal();
+        return;
+      }
+
+      const result = window.appStore.switchUser(this.selectedUserId, enteredPin);
+      if (result === true || (result && result.success)) {
+        this.closeModal();
+        this.updateSidebar();
+      } else {
+        const errEl = document.getElementById('staff-pin-error-text');
+        if (errEl) {
+          errEl.textContent = (result && result.error) ? result.error : 'Incorrect 4-digit PIN.';
+          errEl.style.display = 'block';
+        }
+        const dotsContainer = document.getElementById('staff-pin-dots');
+        if (dotsContainer) {
+          dotsContainer.classList.add('shake', 'pin-shake');
+          setTimeout(() => dotsContainer.classList.remove('shake', 'pin-shake'), 400);
+        }
+        this.updatePinDisplay('');
+      }
+    },
+
+    bindEvents() {
+      const card = document.getElementById('sidebar-user-card');
+      if (card) {
+        card.addEventListener('click', () => this.openModal());
+        card.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            this.openModal();
+          }
+        });
+      }
+
+      const btnClose = document.getElementById('btn-close-staff-modal');
+      if (btnClose) btnClose.addEventListener('click', () => this.closeModal());
+
+      const btnCancel = document.getElementById('btn-cancel-staff-switch');
+      if (btnCancel) btnCancel.addEventListener('click', () => this.closeModal());
+
+      const btnConfirm = document.getElementById('btn-confirm-staff-switch');
+      if (btnConfirm) btnConfirm.addEventListener('click', () => this.authenticateAndSwitch());
+
+      const container = document.getElementById('staff-user-cards-container');
+      if (container) {
+        container.addEventListener('click', (e) => {
+          const uCard = e.target.closest('.staff-user-card');
+          if (uCard && uCard.dataset.id) {
+            this.selectUser(uCard.dataset.id);
+          }
+        });
+      }
+
+      const keypad = document.getElementById('staff-touch-keypad');
+      if (keypad) {
+        keypad.addEventListener('click', (e) => {
+          const btn = e.target.closest('.btn-pin-key, .keypad-btn');
+          if (!btn) return;
+          const key = btn.dataset.pinKey || btn.dataset.key;
+          if (key) {
+            this.handleKeypadPress(key);
+          }
+        });
+      }
+
+      const pinInput = document.getElementById('staff-switch-pin-input');
+      if (pinInput) {
+        pinInput.addEventListener('input', (e) => {
+          this.updatePinDisplay(e.target.value.replace(/\D/g, '').slice(0, 4));
+        });
+      }
+
+      if (this.modal) {
+        this.modal.addEventListener('click', (e) => {
+          if (e.target === this.modal) this.closeModal();
+        });
+      }
+    }
+  };
+
+  StaffSessionController.init();
+  window.StaffSessionController = StaffSessionController;
 
   // --------------------------------------------------------------------------
   // 9. Initial View & Simulator URL Parameters

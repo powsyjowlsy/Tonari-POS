@@ -72,7 +72,13 @@ body {
   user-select: none;
 }
 
+/* ==========================================================================
+   GLOBAL TYPOGRAPHY & TABULAR NUMERAL UTILITIES
+   Strict Invariants: Tabular Alignment, High Legibility, No Shifting
+   ========================================================================== */
+
 /* Tabular Numerals for Jitter-Free Currency & Quantity Alignment */
+.tabular-nums,
 .tabular-price,
 .tabular-numbers,
 .cart-item-qty,
@@ -81,6 +87,40 @@ body {
 .kpi-metric-val {
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
+}
+
+/* Global Typography Utility Classes */
+.font-bold {
+  font-weight: 700;
+}
+
+.font-small {
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+.font-italic {
+  font-style: italic;
+}
+
+.text-main {
+  color: var(--text-main);
+}
+
+.text-sub {
+  color: var(--text-sub);
+}
+
+.text-primary {
+  color: var(--color-primary);
+}
+
+.text-center {
+  text-align: center;
 }
 
 /* Viewport Simulation Frame (Allows testing Desktop, Tablet, and Mobile on any screen) */
@@ -386,6 +426,12 @@ body {
   cursor: not-allowed;
   border-color: var(--border-light);
   background-color: #F9FAFB;
+  user-select: none;
+}
+
+.product-card.card-disabled:hover {
+  border-color: var(--border-light) !important;
+  box-shadow: none;
 }
 
 .product-card-top {
@@ -403,26 +449,36 @@ body {
   letter-spacing: 0.5px;
 }
 
+.badge,
 .product-stock-badge {
   font-size: 11px;
   padding: 2px 6px;
   border-radius: 4px;
   font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
 }
 
-.stock-ok {
+.stock-ok,
+.badge-stock {
   background-color: var(--status-green-bg);
   color: var(--status-green);
   border: 1px solid var(--status-green-border);
 }
 
-.stock-low {
+.stock-low,
+.badge-low {
   background-color: var(--status-amber-bg);
   color: var(--status-amber);
   border: 1px solid var(--status-amber-border);
 }
 
-.stock-out {
+.stock-out,
+.badge-sold-out {
   background-color: var(--status-red-bg);
   color: var(--status-red);
   border: 1px solid var(--status-red-border);
@@ -460,6 +516,8 @@ body {
   font-size: 15px;
   font-weight: 800;
   color: var(--color-primary);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
 }
 
 .btn-add-item {
@@ -473,9 +531,12 @@ body {
   cursor: pointer;
 }
 
-.btn-add-item.disabled {
+.btn-add-item.disabled,
+.btn-add-item:disabled {
   background-color: #9CA3AF;
   cursor: not-allowed;
+  pointer-events: none;
+  opacity: 0.85;
 }
 
 /* ==========================================================================
@@ -1172,6 +1233,42 @@ body {
   background-color: #E5E7EB;
 }
 
+/* Sales Ledger Crimson Danger Action (Void Button) */
+.btn-void-order {
+  background-color: #FEF2F2;
+  border: 1px solid #B91C1C;
+  color: #B91C1C;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.2;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn-void-order:hover {
+  background-color: #B91C1C;
+  color: #FFFFFF;
+  border-color: #B91C1C;
+  box-shadow: 0 1px 3px rgba(185, 28, 28, 0.25);
+}
+
+.btn-void-order:active {
+  background-color: #991B1B;
+  border-color: #991B1B;
+  color: #FFFFFF;
+  box-shadow: none;
+}
+
+.btn-void-order:focus-visible {
+  outline: 2px solid #B91C1C;
+  outline-offset: 1px;
+}
+
 .row-voided {
   background-color: #FEF2F2 !important;
   opacity: 0.75;
@@ -1560,6 +1657,38 @@ body {
   align-items: center;
   gap: 10px;
   margin-bottom: 10px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+  user-select: none;
+}
+
+.sidebar-user-card:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.sidebar-user-card:active {
+  transform: scale(0.98);
+}
+
+.sidebar-user-card:focus-visible {
+  outline: 2px solid #3B82F6;
+  outline-offset: 1px;
+}
+
+.user-switch-chevron {
+  width: 14px;
+  height: 14px;
+  color: #64748B;
+  margin-left: auto;
+  flex-shrink: 0;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.sidebar-user-card:hover .user-switch-chevron {
+  color: #F8FAFC;
+  transform: translateX(2px);
 }
 
 .user-avatar-circle {
@@ -1585,12 +1714,28 @@ body {
   display: inline-block;
   font-size: 9px;
   font-weight: 800;
-  background-color: #F59E0B;
-  color: #1E293B;
+  background-color: #10B981;
+  color: #FFFFFF;
   padding: 1px 6px;
   border-radius: 4px;
   text-transform: uppercase;
   margin-top: 2px;
+  letter-spacing: 0.5px;
+}
+
+.user-role-badge.badge-role-admin {
+  background-color: #F59E0B;
+  color: #1E293B;
+}
+
+.user-role-badge.badge-role-cashier {
+  background-color: #10B981;
+  color: #FFFFFF;
+}
+
+.user-role-badge.badge-role-kitchen {
+  background-color: #8B5CF6;
+  color: #FFFFFF;
 }
 
 .btn-sidebar-lock {
@@ -2160,3 +2305,316 @@ body {
   color: #0F172A;
   margin-bottom: 10px;
 }
+
+/* ==========================================================================
+   MILESTONE 1: HARDWARE & SETTINGS DIAGNOSTICS MODAL
+   ========================================================================== */
+.diag-section-header {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-sub);
+  margin-bottom: 6px;
+  margin-top: 10px;
+}
+
+.diag-section-header:first-of-type {
+  margin-top: 0;
+}
+
+.diag-card {
+  background-color: var(--bg-subtle);
+  border: 1px solid var(--border-medium);
+  border-radius: 6px;
+  padding: 10px 14px;
+}
+
+.diag-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border-light, #E2E8F0);
+  font-size: 13px;
+}
+
+.diag-row:last-child {
+  border-bottom: none;
+}
+
+.diag-label {
+  color: var(--text-sub);
+  font-weight: 500;
+}
+
+.diag-value {
+  color: var(--text-main);
+  font-weight: 600;
+}
+
+.diag-val-url {
+  color: var(--color-primary);
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.diag-status-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.diag-status-badge.status-online {
+  background-color: #DEF7EC;
+  color: #03543F;
+  border: 1px solid #31C48D;
+}
+
+.diag-status-badge.status-warning {
+  background-color: #FEF08A;
+  color: #713F12;
+  border: 1px solid #FACC15;
+}
+
+/* ==========================================================================
+   TOUCH 3x4 PIN KEYPAD & MASKED INDICATOR DOTS (SRS RTM-FR-005, M2 Upgrade)
+   Strict Invariants: Zero Gradients, Tabular Numerals, 48px+ Touch Targets
+   ========================================================================== */
+
+.pin-display-wrapper {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto 14px;
+  width: 100%;
+  max-width: 240px;
+  height: 44px;
+}
+
+.pin-dots-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 18px;
+  border-radius: 20px;
+  background-color: var(--bg-subtle, #F9FAFB);
+  border: 1px solid var(--border-medium, #D1D5DB);
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.pin-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--border-dark, #9CA3AF);
+  background-color: transparent;
+  transition: transform 0.12s cubic-bezier(0.4, 0, 0.2, 1),
+              background-color 0.12s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.12s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.pin-dot.filled {
+  background-color: var(--color-primary, #B91C1C);
+  border-color: var(--color-primary, #B91C1C);
+  transform: scale(1.15);
+  box-shadow: 0 0 8px rgba(185, 28, 28, 0.35);
+}
+
+/* Keypad tactile error shake animation */
+@keyframes pin-error-shake-kf {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-8px); }
+  40%, 80% { transform: translateX(8px); }
+}
+
+.pin-dots-container.pin-shake,
+.pin-dots-container.shake {
+  animation: pin-error-shake-kf 0.35s ease-in-out;
+  border-color: var(--status-red, #B91C1C);
+  background-color: var(--status-red-bg, #FEE2E2);
+}
+
+.pin-dots-container.pin-shake .pin-dot,
+.pin-dots-container.shake .pin-dot {
+  border-color: var(--status-red, #B91C1C);
+}
+
+.pin-dots-container.pin-shake .pin-dot.filled,
+.pin-dots-container.shake .pin-dot.filled {
+  background-color: var(--status-red, #B91C1C);
+}
+
+/* Accessible & Automation-Retained Synced Input */
+.pin-synced-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.001;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: transparent;
+  caret-color: transparent;
+  cursor: default;
+  z-index: 2;
+  font-size: 16px;
+}
+
+.pin-synced-input:focus {
+  outline: none;
+}
+
+/* 3x4 Commercial Touch Numeric Keypad Grid */
+.pin-keypad-grid,
+.touch-keypad-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  max-width: 270px;
+  margin: 0 auto 10px;
+}
+
+.btn-pin-key,
+.keypad-btn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 48px;
+  background-color: #FFFFFF;
+  color: var(--text-main, #111827);
+  border: 1px solid var(--border-medium, #D1D5DB);
+  border-radius: 6px;
+  font-size: 18px;
+  font-weight: 700;
+  font-family: var(--font-base);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  transition: background-color 0.1s ease, border-color 0.1s ease, transform 0.05s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.btn-pin-key:hover,
+.keypad-btn:hover {
+  background-color: #F3F4F6;
+  border-color: var(--border-dark, #9CA3AF);
+}
+
+.btn-pin-key:active,
+.keypad-btn:active {
+  background-color: #E5E7EB;
+  transform: scale(0.96);
+}
+
+.btn-pin-key:focus-visible,
+.keypad-btn:focus-visible {
+  outline: 2px solid var(--color-primary, #B91C1C);
+  outline-offset: 1px;
+}
+
+/* Action keys (Clear & DEL) */
+.btn-pin-action,
+.keypad-btn-fn {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  background-color: var(--bg-subtle, #F9FAFB);
+  color: var(--text-secondary, #374151);
+}
+
+.btn-pin-clear:hover,
+.keypad-btn-fn[data-key="clear"]:hover,
+.keypad-btn-fn[data-pin-key="clear"]:hover {
+  background-color: var(--status-red-bg, #FEE2E2);
+  color: var(--status-red, #B91C1C);
+  border-color: var(--status-red-border, #FCA5A5);
+}
+
+.btn-pin-clear:active,
+.keypad-btn-fn[data-key="clear"]:active,
+.keypad-btn-fn[data-pin-key="clear"]:active {
+  background-color: #FECACA;
+  transform: scale(0.96);
+}
+
+.btn-pin-backspace:hover,
+.keypad-btn-fn[data-key="backspace"]:hover,
+.keypad-btn-fn[data-pin-key="backspace"]:hover {
+  background-color: var(--status-amber-bg, #FEF3C7);
+  color: var(--status-amber, #B45309);
+  border-color: var(--status-amber-border, #FCD34D);
+}
+
+.btn-pin-backspace:active,
+.keypad-btn-fn[data-key="backspace"]:active,
+.keypad-btn-fn[data-pin-key="backspace"]:active {
+  background-color: #FDE68A;
+  transform: scale(0.96);
+}
+
+/* Staff Accounts & Cashier Switcher Grid */
+.staff-user-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.staff-user-card {
+  padding: 8px 6px;
+  border-radius: 8px;
+  border: 2px solid var(--border-medium, #E2E8F0);
+  background-color: var(--bg-subtle, #F8FAFC);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.staff-user-card:hover {
+  border-color: var(--border-dark, #94A3B8);
+  background-color: #F1F5F9;
+}
+
+.staff-user-card.selected {
+  border-color: var(--color-primary, #B91C1C);
+  background-color: #FEF2F2;
+  box-shadow: 0 0 0 1px var(--color-primary, #B91C1C);
+}
+
+.staff-user-card .user-avatar-circle {
+  width: 30px;
+  height: 30px;
+  font-size: 11px;
+}
+
+.staff-user-name {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-main, #0F172A);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.staff-user-card.selected .staff-user-name {
+  color: var(--color-primary, #B91C1C);
+}
+
+
