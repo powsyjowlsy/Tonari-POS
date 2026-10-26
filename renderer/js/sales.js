@@ -1,12 +1,16 @@
-// Sales Analytics, Daily Z-Reading, Transaction Ledger & CSV Export Controller
+// Sales Analytics, Daily Z-Reading, Transaction Ledger, Cash Float Reconciliation & CSV Export
+// Implements: SRS RTM-FR-005 (PIN Voiding), RTM-FR-006 (Z-Reading Aggregation), RTM-FR-007 (Cash Drawer Reconciliation)
+// Observes: Zero-Emoji Invariant, Tabular Numerals, Educational Commenting
 
 const SalesController = {
   searchQuery: '',
+  pendingVoidOrderId: null,
 
   init() {
     this.tableBody = document.getElementById('sales-ledger-body');
     this.topItemsContainer = document.getElementById('top-selling-items-container');
     this.btnExportCsv = document.getElementById('btn-export-csv');
+    this.pinModal = document.getElementById('manager-pin-modal');
 
     this.bindEvents();
     this.render();
@@ -18,10 +22,165 @@ const SalesController = {
     });
   },
 
+  bindEvents() {
+    // Search input filter for sales ledger
+    const searchInput = document.getElementById('sales-search-input');
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        this.searchQuery = e.target.value.trim().toLowerCase();
+        this.renderLedger();
+      });
+    }
+
+    // CSV export button in Sales view and top bar
+    if (this.btnExportCsv) {
+      this.btnExportCsv.addEventListener('click', () => {
+        this.exportCsv();
+      });
+    }
+
+    const topBtnExportCsv = document.getElementById('top-btn-export-csv');
+    if (topBtnExportCsv) {
+      topBtnExportCsv.addEventListener('click', () => {
+        this.exportCsv();
+      });
+    }
+
+    // Print Z-Report top button
+    const topBtnPrintZ = document.getElementById('top-btn-print-z');
+    if (topBtnPrintZ) {
+      topBtnPrintZ.addEventListener('click', () => {
+        this.printZReport();
+      });
+    }
+
+    // Cash Drawer Float calculation button & input
+    const btnCalcVariance = document.getElementById('btn-calc-drawer-variance');
+    if (btnCalcVariance) {
+      btnCalcVariance.addEventListener('click', () => {
+        this.reconcileCashDrawer();
+      });
+    }
+
+    const countedInput = document.getElementById('drawer-counted-cash-input');
+    if (countedInput) {
+      countedInput.addEventListener('input', () => {
+        this.reconcileCashDrawer();
+      });
+    }
+
+    // Manager PIN Modal actions (SRS RTM-FR-005)
+    const btnCancelPin = document.getElementById('btn-cancel-pin-modal');
+    if (btnCancelPin) {
+      btnCancelPin.addEventListener('click', () => {
+        this.closePinModal();
+      });
+    }
+
+    const btnSubmitPin = document.getElementById('btn-submit-pin-modal');
+    if (btnSubmitPin) {
+      btnSubmitPin.addEventListener('click', () => {
+        this.verifyAndExecuteVoid();
+      });
+    }
+  },
+
+  // --------------------------------------------------------------------------
+  // Cash Drawer Reconciliation (SRS RTM-FR-007)
+  // --------------------------------------------------------------------------
+  reconcileCashDrawer() {
+    const inputEl = document.getElementById('drawer-counted-cash-input');
+    const countedVal = inputEl ? inputEl.value : null;
+
+    const summary = window.appStore.getCashDrawerSummary(countedVal);
+
+    const elFloat = document.getElementById('drawer-opening-float-display');
+    const elCashSales = document.getElementById('drawer-cash-sales-display');
+    const elExpected = document.getElementById('drawer-expected-cash-display');
+    const elVariance = document.getElementById('drawer-variance-amount-display');
+    const elStatusBadge = document.getElementById('drawer-variance-status-badge');
+
+    if (elFloat) elFloat.textContent = `PHP ${summary.openingFloat}`;
+    if (elCashSales) elCashSales.textContent = `PHP ${summary.cashSales}`;
+    if (elExpected) elExpected.textContent = `PHP ${summary.expectedCash}`;
+
+    if (elVariance && summary.variance !== null) {
+      elVariance.textContent = `PHP ${summary.variance}`;
+      if (summary.varianceStatus === 'Balanced') {
+        elVariance.className = 'tabular-price font-bold text-success';
+        if (elStatusBadge) elStatusBadge.innerHTML = '<span class="status-badge badge-in-stock">Balanced (0.00)</span>';
+      } else if (summary.varianceStatus === 'Over') {
+        elVariance.className = 'tabular-price font-bold text-success';
+        if (elStatusBadge) elStatusBadge.innerHTML = `<span class="status-badge badge-low-stock">Over (+PHP ${summary.variance})</span>`;
+      } else {
+        elVariance.className = 'tabular-price font-bold text-danger';
+        if (elStatusBadge) elStatusBadge.innerHTML = `<span class="status-badge badge-out-of-stock">Short (-PHP ${Math.abs(summary.variance).toFixed(2)})</span>`;
+      }
+    } else {
+      if (elVariance) elVariance.textContent = 'PHP 0.00';
+      if (elStatusBadge) elStatusBadge.innerHTML = '<span class="status-badge badge-in-stock">Awaiting Cash Count</span>';
+    }
+  },
+
+  // --------------------------------------------------------------------------
+  // PIN-Secured Order Voiding (SRS RTM-FR-005)
+  // --------------------------------------------------------------------------
+  promptVoidWithPin(orderId) {
+    this.pendingVoidOrderId = orderId;
+    const pinInput = document.getElementById('manager-pin-input');
+    if (pinInput) pinInput.value = '';
+    const errorText = document.getElementById('pin-error-text');
+    if (errorText) errorText.style.display = 'none';
+
+    document.getElementById('pin-target-order-label').textContent = `Authorize Void for Order #${orderId}`;
+
+    if (this.pinModal) {
+      this.pinModal.classList.add('modal-visible');
+      if (pinInput) pinInput.focus();
+    }
+  },
+
+  closePinModal() {
+    if (this.pinModal) {
+      this.pinModal.classList.remove('modal-visible');
+    }
+    this.pendingVoidOrderId = null;
+  },
+
+  verifyAndExecuteVoid() {
+    const pinInput = document.getElementById('manager-pin-input');
+    const errorText = document.getElementById('pin-error-text');
+    const enteredPin = pinInput ? pinInput.value.trim() : '';
+
+    const isValid = window.appStore.verifyManagerPin(enteredPin);
+    if (!isValid) {
+      if (errorText) {
+        errorText.textContent = `Invalid 4-digit PIN (Attempts: ${window.appStore.failedPinAttempts}/3). Default is 1234.`;
+        errorText.style.display = 'block';
+      }
+      return;
+    }
+
+    const orderId = this.pendingVoidOrderId;
+    this.closePinModal();
+
+    const reason = prompt(`Enter official reason for voiding Order #${orderId}:`, 'Customer cancellation / cashier input error');
+    if (reason !== null && reason.trim() !== '') {
+      const success = window.appStore.voidOrder(orderId, reason.trim());
+      if (success) {
+        alert(`Order #${orderId} has been officially voided. Inventory stock has been restored.`);
+      }
+    }
+  },
+
+  // --------------------------------------------------------------------------
+  // Z-Reading & KPI Rendering
+  // --------------------------------------------------------------------------
   render() {
     this.renderKpis();
     this.renderTopSelling();
     this.renderLedger();
+    this.reconcileCashDrawer();
   },
 
   renderKpis() {
@@ -39,7 +198,6 @@ const SalesController = {
 
     const voidedCount = window.appStore.orders.filter(o => o.status === 'Voided').length;
 
-    // Populate KPI Elements
     const elSales = document.getElementById('kpi-total-sales');
     if (elSales) elSales.textContent = `PHP ${totalSales.toFixed(2)}`;
 
@@ -66,11 +224,12 @@ const SalesController = {
 
     orders.forEach(order => {
       order.items.forEach(item => {
-        if (!itemMap[item.name]) {
-          itemMap[item.name] = { name: item.name, category: item.category, qty: 0, revenue: 0 };
+        const itemDisplayName = item.flavor ? `${item.name} (${item.flavor})` : item.name;
+        if (!itemMap[itemDisplayName]) {
+          itemMap[itemDisplayName] = { name: itemDisplayName, category: item.category, qty: 0, revenue: 0 };
         }
-        itemMap[item.name].qty += item.quantity;
-        itemMap[item.name].revenue += item.price * item.quantity;
+        itemMap[itemDisplayName].qty += item.quantity;
+        itemMap[itemDisplayName].revenue += item.price * item.quantity;
       });
     });
 
@@ -104,19 +263,17 @@ const SalesController = {
     let orders = window.appStore.orders.slice();
 
     if (this.searchQuery) {
-      const q = this.searchQuery.toLowerCase();
-      orders = orders.filter(o => 
-        o.id.toLowerCase().includes(q) || 
-        o.date.toLowerCase().includes(q) || 
-        o.paymentMethod.toLowerCase().includes(q) ||
-        (o.gcashRef && o.gcashRef.toLowerCase().includes(q))
-      );
+      orders = orders.filter(o => {
+        return o.id.toLowerCase().includes(this.searchQuery) ||
+               o.cashier.toLowerCase().includes(this.searchQuery) ||
+               o.items.some(i => i.name.toLowerCase().includes(this.searchQuery));
+      });
     }
 
     if (orders.length === 0) {
       this.tableBody.innerHTML = `
         <tr>
-          <td colspan="8" class="text-center py-4 text-muted">No transaction logs available.</td>
+          <td colspan="8" class="text-center py-4 text-sub">No transaction orders found matching criteria.</td>
         </tr>
       `;
       return;
@@ -124,72 +281,53 @@ const SalesController = {
 
     let rowsHtml = '';
     orders.forEach(o => {
-      const isVoided = o.status === 'Voided';
-      const itemsBrief = o.items.map(i => `${i.quantity}x ${i.name}`).join(', ');
-      
-      let statusBadge = `<span class="status-badge badge-${o.status.toLowerCase()}">${o.status}</span>`;
+      const isVoid = o.status === 'Voided';
+      const itemsSummary = o.items.map(i => `${i.quantity}x ${i.name}${i.flavor ? ` [${i.flavor}]` : ''}`).join(', ');
 
-      let actionBtn = '';
-      if (!isVoided) {
-        actionBtn = `
-          <button class="btn-table-action btn-view-receipt" data-id="${o.id}">Receipt</button>
-          <button class="btn-table-action btn-void-order" data-id="${o.id}">Void</button>
-        `;
+      let statusBadge = '';
+      if (isVoid) {
+        statusBadge = '<span class="status-badge badge-out-of-stock">Voided</span>';
+      } else if (o.status === 'Completed') {
+        statusBadge = '<span class="status-badge badge-in-stock">Completed</span>';
       } else {
-        actionBtn = `<span class="text-sub font-small font-mono">Voided</span>`;
+        statusBadge = `<span class="status-badge badge-low-stock">${o.status}</span>`;
       }
 
       rowsHtml += `
-        <tr class="${isVoided ? 'row-voided' : ''}">
-          <td class="font-mono font-bold">#${o.id}</td>
-          <td class="text-sub font-small">${o.date} ${o.time}</td>
+        <tr>
+          <td class="font-bold text-main font-mono">#${o.id}</td>
+          <td class="text-sub font-mono font-small">${o.time}</td>
           <td><span class="category-tag">${o.orderType}</span></td>
-          <td class="items-cell" title="${itemsBrief}">${itemsBrief}</td>
-          <td class="tabular-price font-bold ${isVoided ? 'line-through text-sub' : ''}">PHP ${o.totalDue}</td>
-          <td>
-            <span class="payment-tag">${o.paymentMethod}</span>
-            ${o.gcashRef ? `<span class="text-sub font-mono font-small">(${o.gcashRef})</span>` : ''}
+          <td class="text-main font-small" style="max-width: 260px;">${itemsSummary}</td>
+          <td class="tabular-price font-bold ${isVoid ? 'text-sub' : 'text-main'}" style="${isVoid ? 'text-decoration: line-through;' : ''}">
+            PHP ${parseFloat(o.totalDue).toFixed(2)}
           </td>
+          <td><span class="text-sub font-bold">${o.paymentMethod}</span></td>
           <td>${statusBadge}</td>
-          <td>${actionBtn}</td>
+          <td>
+            ${!isVoid ? `<button class="btn-void-order" data-id="${o.id}">Void</button>` : `<span class="text-sub font-small font-italic">${o.voidReason || 'Voided'}</span>`}
+          </td>
         </tr>
       `;
     });
 
     this.tableBody.innerHTML = rowsHtml;
 
-    // Attach row events
-    this.tableBody.querySelectorAll('.btn-view-receipt').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const order = window.appStore.orders.find(o => o.id === btn.dataset.id);
-        if (order) {
-          window.CheckoutController.showReceipt(order);
-        }
-      });
-    });
-
+    // Attach Void button clicks with PIN barrier
     this.tableBody.querySelectorAll('.btn-void-order').forEach(btn => {
       btn.addEventListener('click', () => {
-        this.promptVoid(btn.dataset.id);
+        this.promptVoidWithPin(btn.dataset.id);
       });
     });
   },
 
-  promptVoid(orderId) {
-    const reason = prompt(`Enter reason for voiding Order #${orderId}:`, 'Customer cancellation / cashier error');
-    if (reason !== null && reason.trim() !== '') {
-      const success = window.appStore.voidOrder(orderId, reason.trim());
-      if (success) {
-        alert(`Order #${orderId} has been voided. Stock counts have been restored to inventory.`);
-      }
-    }
-  },
-
-  // Export Sales Ledger to clean CSV format ready for Microsoft Excel
-  async exportCsv() {
+  // --------------------------------------------------------------------------
+  // CSV Export Generation
+  // --------------------------------------------------------------------------
+  exportCsv() {
     const orders = window.appStore.orders;
     if (orders.length === 0) {
-      alert('No sales transactions recorded yet to export.');
+      alert('Cannot export: No transaction records to export.');
       return;
     }
 
@@ -199,16 +337,16 @@ const SalesController = {
       'Time',
       'Order Type',
       'Cashier',
-      'Items Ordered',
+      'Items Purchased',
       'Subtotal (PHP)',
-      'Discount Label',
+      'Discount Type',
       'Discount Amount (PHP)',
-      'Total Amount Due (PHP)',
+      'Total Due (PHP)',
       'Payment Method',
       'Amount Tendered (PHP)',
       'Change Due (PHP)',
-      'GCash Reference',
-      'Order Status',
+      'GCash Ref',
+      'Status',
       'Void Reason'
     ];
 
@@ -221,7 +359,7 @@ const SalesController = {
     let csvContent = headers.join(',') + '\r\n';
 
     orders.forEach(o => {
-      const itemsStr = o.items.map(i => `${i.quantity}x ${i.name} (PHP ${i.price})`).join('; ');
+      const itemsStr = o.items.map(i => `${i.quantity}x ${i.name}${i.flavor ? ` (${i.flavor})` : ''} (PHP ${i.price})`).join('; ');
 
       const row = [
         escapeCsv(o.id),
@@ -246,52 +384,37 @@ const SalesController = {
     });
 
     const now = new Date();
-    const dateStr = now.toISOString().slice(0, 10);
-    const filename = `Tonari_Sales_Report_${dateStr}.csv`;
+    const filename = `Tonari_Sales_Report_${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}.csv`;
 
-    // If running in Electron, save directly to Desktop/Tonari_Sales_Reports
-    if (window.posNative && window.posNative.isElectron) {
-      try {
-        const result = await window.posNative.saveCsvReport({
-          filename: filename,
-          content: csvContent
+    // IPC save if running in Electron native shell
+    if (window.posNative && window.posNative.saveCsvReport) {
+      window.posNative.saveCsvReport({ filename, content: csvContent })
+        .then(res => {
+          if (res && res.success) {
+            alert(`Sales report CSV successfully saved to:\n${res.filePath}`);
+          }
+        })
+        .catch(err => {
+          console.error('IPC Save failed, falling back to browser download:', err);
+          this.triggerBrowserDownload(filename, csvContent);
         });
-
-        if (result.success) {
-          alert(`Sales report successfully exported to Desktop:\n${result.filePath}`);
-          return;
-        }
-      } catch (err) {
-        console.warn('Native CSV save error, falling back to browser download:', err);
-      }
+    } else {
+      this.triggerBrowserDownload(filename, csvContent);
     }
+  },
 
-    // Web / Mobile browser download fallback
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
+  triggerBrowserDownload(filename, text) {
+    const blob = new Blob([text], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
-    link.setAttribute('href', url);
+    link.href = URL.createObjectURL(blob);
     link.setAttribute('download', filename);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    URL.revokeObjectURL(url);
   },
 
-  bindEvents() {
-    const searchInput = document.getElementById('sales-search-input');
-    if (searchInput) {
-      searchInput.addEventListener('input', (e) => {
-        this.searchQuery = e.target.value.trim();
-        this.renderLedger();
-      });
-    }
-
-    if (this.btnExportCsv) {
-      this.btnExportCsv.addEventListener('click', () => {
-        this.exportCsv();
-      });
-    }
+  printZReport() {
+    window.print();
   }
 };
 

@@ -1,29 +1,47 @@
 // Central Reactive State Store with LocalStorage Persistence for Tonari POS
+// Observes: Silent Failure Hunting (try/catch logging), Zero-Emoji, Educational Commenting
+// Implements: SRS RTM-FR-001 (Flavor Selection), RTM-FR-005 (PIN Security), RTM-FR-007 (Cash Float), RTM-FR-009 (Waste Logger)
 
 class Store {
   constructor() {
+    // ------------------------------------------------------------------------
+    // Persistence Storage Keys
+    // ------------------------------------------------------------------------
     this.STORAGE_KEYS = {
       PRODUCTS: 'tonari_pos_products',
       ORDERS: 'tonari_pos_orders',
-      SETTINGS: 'tonari_pos_settings'
+      SETTINGS: 'tonari_pos_settings',
+      WASTE_LOGS: 'tonari_pos_waste_logs'
     };
 
+    // Core In-Memory Domain State
     this.products = this.loadProducts();
     this.orders = this.loadOrders();
+    this.settings = this.loadSettings();
+    this.wasteLogs = this.loadWasteLogs();
+
+    // Ephemeral Transaction State
     this.cart = [];
     this.orderType = 'Dine-In';
     this.discountRate = 0; // 0 = none, 0.05 = student, 0.20 = senior/pwd
     this.discountLabel = 'None';
     this.activeCategory = 'all';
     this.searchQuery = '';
-    this.activeView = 'pos'; // 'pos', 'kitchen', 'inventory', 'sales'
+    this.activeView = 'dashboard'; // Default to executive store performance dashboard
     this.deviceMode = 'auto'; // 'auto', 'desktop', 'tablet', 'mobile'
     this.isMobileCartOpen = false;
 
+    // Security State (SRS RTM-FR-005)
+    this.isManagerAuthenticated = false;
+    this.failedPinAttempts = 0;
+
+    // Reactive Observer Listeners
     this.listeners = [];
   }
 
-  // Event Subscription System
+  // --------------------------------------------------------------------------
+  // Reactive Event Subscription Bus
+  // --------------------------------------------------------------------------
   subscribe(callback) {
     this.listeners.push(callback);
     return () => {
@@ -36,12 +54,14 @@ class Store {
       try {
         cb(event, payload);
       } catch (err) {
-        console.error('Store listener error:', err);
+        console.error('Store listener execution error on event:', event, err);
       }
     });
   }
 
-  // Persistence Handlers
+  // --------------------------------------------------------------------------
+  // Persistence Handlers (with Silent Failure Hunting & Safe Fallbacks)
+  // --------------------------------------------------------------------------
   loadProducts() {
     try {
       const data = localStorage.getItem(this.STORAGE_KEYS.PRODUCTS);
@@ -49,7 +69,7 @@ class Store {
         return JSON.parse(data);
       }
     } catch (e) {
-      console.warn('Could not read products from storage, using seed data:', e);
+      console.warn('Could not parse products from localStorage, falling back to seed catalog:', e);
     }
     return JSON.parse(JSON.stringify(window.DEFAULT_PRODUCTS || []));
   }
@@ -58,7 +78,7 @@ class Store {
     try {
       localStorage.setItem(this.STORAGE_KEYS.PRODUCTS, JSON.stringify(this.products));
     } catch (e) {
-      console.error('Failed to save products:', e);
+      console.error('Failed to persist products to localStorage:', e);
     }
   }
 
@@ -69,7 +89,7 @@ class Store {
         return JSON.parse(data);
       }
     } catch (e) {
-      console.warn('Could not read orders from storage:', e);
+      console.warn('Could not parse orders from localStorage:', e);
     }
     return [];
   }
@@ -78,13 +98,66 @@ class Store {
     try {
       localStorage.setItem(this.STORAGE_KEYS.ORDERS, JSON.stringify(this.orders));
     } catch (e) {
-      console.error('Failed to save orders:', e);
+      console.error('Failed to persist orders to localStorage:', e);
     }
   }
 
-  // Cart Operations
-  addToCart(product) {
-    const existing = this.cart.find(item => item.id === product.id);
+  loadSettings() {
+    try {
+      const data = localStorage.getItem(this.STORAGE_KEYS.SETTINGS);
+      if (data) {
+        return JSON.parse(data);
+      }
+    } catch (e) {
+      console.warn('Could not parse settings, using defaults:', e);
+    }
+    return {
+      storeName: 'Tonari',
+      branch: 'Tibanga, Iligan City',
+      managerPin: '1234',
+      openingFloat: 1000.00,
+      autoPrintReceipt: true,
+      soundNotifications: false
+    };
+  }
+
+  saveSettings() {
+    try {
+      localStorage.setItem(this.STORAGE_KEYS.SETTINGS, JSON.stringify(this.settings));
+    } catch (e) {
+      console.error('Failed to persist settings to localStorage:', e);
+    }
+  }
+
+  loadWasteLogs() {
+    try {
+      const data = localStorage.getItem(this.STORAGE_KEYS.WASTE_LOGS);
+      if (data) {
+        return JSON.parse(data);
+      }
+    } catch (e) {
+      console.warn('Could not parse waste logs from localStorage:', e);
+    }
+    return [];
+  }
+
+  saveWasteLogs() {
+    try {
+      localStorage.setItem(this.STORAGE_KEYS.WASTE_LOGS, JSON.stringify(this.wasteLogs));
+    } catch (e) {
+      console.error('Failed to persist waste logs to localStorage:', e);
+    }
+  }
+
+  // --------------------------------------------------------------------------
+  // Cart Operations with Flavor & Modifier Support (SRS RTM-FR-001)
+  // --------------------------------------------------------------------------
+  addToCart(product, selectedFlavor = null) {
+    const flavor = selectedFlavor || (product.modifiers && product.modifiers.length > 0 ? product.modifiers[0] : null);
+    const cartKey = flavor ? `${product.id}__${flavor}` : product.id;
+
+    // Check if matching line item (same SKU and same flavor) already exists in cart
+    const existing = this.cart.find(item => item.cartKey === cartKey || (!item.cartKey && item.id === product.id && item.flavor === flavor));
     const stockAvailable = product.stock;
 
     if (existing) {
@@ -99,8 +172,10 @@ class Store {
         return false;
       }
       this.cart.push({
+        cartKey: cartKey,
         id: product.id,
         name: product.name,
+        flavor: flavor,
         category: product.category,
         price: product.price,
         quantity: 1
@@ -111,21 +186,21 @@ class Store {
     return true;
   }
 
-  updateQuantity(productId, delta) {
-    const item = this.cart.find(i => i.id === productId);
+  updateQuantity(itemKey, delta) {
+    const item = this.cart.find(i => i.cartKey === itemKey || i.id === itemKey);
     if (!item) return;
 
-    const product = this.products.find(p => p.id === productId);
+    const product = this.products.find(p => p.id === item.id);
     const maxStock = product ? product.stock : 999;
 
     const newQty = item.quantity + delta;
     if (newQty <= 0) {
-      this.removeFromCart(productId);
+      this.removeFromCart(item.cartKey || item.id);
       return;
     }
 
     if (newQty > maxStock) {
-      this.notify('cart-error', `Max available stock is ${maxStock}.`);
+      this.notify('cart-error', `Max available stock for "${item.name}" is ${maxStock}.`);
       return;
     }
 
@@ -133,8 +208,8 @@ class Store {
     this.notify('cart-updated', this.cart);
   }
 
-  removeFromCart(productId) {
-    this.cart = this.cart.filter(item => item.id !== productId);
+  removeFromCart(itemKey) {
+    this.cart = this.cart.filter(item => (item.cartKey || item.id) !== itemKey);
     this.notify('cart-updated', this.cart);
   }
 
@@ -154,7 +229,9 @@ class Store {
     this.notify('cart-updated', this.cart);
   }
 
-  // Cart Totals Calculation (Fixed precision)
+  // --------------------------------------------------------------------------
+  // Financial Computation (Centavo Accuracy & Fixed Precision)
+  // --------------------------------------------------------------------------
   getCartSummary() {
     const subtotal = this.cart.reduce((acc, item) => {
       return acc + (Math.round(item.price * 100) * item.quantity);
@@ -174,7 +251,9 @@ class Store {
     };
   }
 
-  // Stock Management Operations
+  // --------------------------------------------------------------------------
+  // Inventory Stock & Kitchen Waste Tracking (SRS RTM-FR-002, RTM-FR-009)
+  // --------------------------------------------------------------------------
   deductStockFromCart() {
     this.cart.forEach(cartItem => {
       const prod = this.products.find(p => p.id === cartItem.id);
@@ -205,7 +284,139 @@ class Store {
     }
   }
 
+  logKitchenWaste(productId, quantity, reason, notes) {
+    const prod = this.products.find(p => p.id === productId);
+    if (!prod) return false;
+
+    const qty = parseInt(quantity, 10);
+    if (isNaN(qty) || qty <= 0) return false;
+
+    // Deduct physical inventory
+    prod.stock = Math.max(0, prod.stock - qty);
+    this.saveProducts();
+
+    // Record audit log
+    const now = new Date();
+    const wasteEntry = {
+      id: 'WST-' + (1000 + this.wasteLogs.length + 1),
+      date: now.toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' }),
+      time: now.toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit', hour12: true }),
+      timestamp: now.toISOString(),
+      productId: prod.id,
+      productName: prod.name,
+      quantity: qty,
+      unitPrice: prod.price,
+      costLost: (qty * prod.price).toFixed(2),
+      reason: reason || 'Dropped / Spilled',
+      notes: notes || 'Logged by kitchen staff'
+    };
+
+    this.wasteLogs.unshift(wasteEntry);
+    this.saveWasteLogs();
+
+    this.notify('products-updated', this.products);
+    this.notify('waste-logs-updated', this.wasteLogs);
+    return true;
+  }
+
+  // --------------------------------------------------------------------------
+  // Cash Drawer Float & Variance Reconciliation (SRS RTM-FR-007)
+  // --------------------------------------------------------------------------
+  getCashDrawerSummary(countedCashInput = null) {
+    const activeOrders = this.orders.filter(o => o.status !== 'Voided');
+    const cashSales = activeOrders
+      .filter(o => o.paymentMethod === 'Cash')
+      .reduce((sum, o) => sum + parseFloat(o.totalDue), 0);
+    const gcashSales = activeOrders
+      .filter(o => o.paymentMethod === 'GCash')
+      .reduce((sum, o) => sum + parseFloat(o.totalDue), 0);
+
+    const openingFloat = parseFloat(this.settings.openingFloat || 1000.00);
+    const expectedCashInDrawer = openingFloat + cashSales;
+
+    let countedCash = null;
+    let variance = null;
+    let varianceStatus = 'Uncounted'; // 'Balanced', 'Over', 'Short'
+
+    if (countedCashInput !== null && countedCashInput !== '') {
+      countedCash = parseFloat(countedCashInput) || 0;
+      variance = countedCash - expectedCashInDrawer;
+      if (Math.abs(variance) < 0.01) {
+        varianceStatus = 'Balanced';
+      } else if (variance > 0) {
+        varianceStatus = 'Over';
+      } else {
+        varianceStatus = 'Short';
+      }
+    }
+
+    return {
+      openingFloat: openingFloat.toFixed(2),
+      cashSales: cashSales.toFixed(2),
+      gcashSales: gcashSales.toFixed(2),
+      expectedCash: expectedCashInDrawer.toFixed(2),
+      countedCash: countedCash !== null ? countedCash.toFixed(2) : null,
+      variance: variance !== null ? variance.toFixed(2) : null,
+      varianceStatus: varianceStatus
+    };
+  }
+
+  // --------------------------------------------------------------------------
+  // Weekly 7-Day Performance Trend Aggregation (Dashboard Feature)
+  // --------------------------------------------------------------------------
+  getWeeklySalesTrend() {
+    const days = [];
+    const today = new Date();
+
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      const formattedDate = d.toLocaleDateString('en-PH', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+      const shortDay = i === 0 ? 'Today' : d.toLocaleDateString('en-US', { weekday: 'short' });
+      const dateSub = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+      // Match orders for that day
+      const dayOrders = this.orders.filter(o => o.status !== 'Voided' && o.date === formattedDate);
+      const revenue = dayOrders.reduce((sum, o) => sum + parseFloat(o.totalDue), 0);
+
+      days.push({
+        dateStr: formattedDate,
+        dayLabel: shortDay,
+        dateSub: dateSub,
+        revenue: revenue,
+        count: dayOrders.length
+      });
+    }
+
+    return days;
+  }
+
+  // --------------------------------------------------------------------------
+  // Manager Security & PIN Verification (SRS RTM-FR-005, RTM-NFR-003)
+  // --------------------------------------------------------------------------
+  verifyManagerPin(inputPin) {
+    const targetPin = this.settings.managerPin || '1234';
+    if (inputPin === targetPin) {
+      this.isManagerAuthenticated = true;
+      this.failedPinAttempts = 0;
+      return true;
+    }
+    this.failedPinAttempts += 1;
+    return false;
+  }
+
+  lockTerminal() {
+    this.isManagerAuthenticated = false;
+    this.notify('terminal-locked', true);
+  }
+
+  // --------------------------------------------------------------------------
   // Order Placement & Kitchen Operations
+  // --------------------------------------------------------------------------
   placeOrder(paymentDetails) {
     const summary = this.getCartSummary();
     const orderNumber = 'TN-' + (1000 + this.orders.length + 1);
@@ -250,7 +461,7 @@ class Store {
     this.orders.unshift(newOrder);
     this.saveOrders();
 
-    // Clear cart
+    // Clear cart and close drawer
     this.clearCart();
     this.isMobileCartOpen = false;
 
@@ -290,7 +501,9 @@ class Store {
     return true;
   }
 
-  // Device & Navigation Setters
+  // --------------------------------------------------------------------------
+  // Navigation & Viewport Setters
+  // --------------------------------------------------------------------------
   setView(viewName) {
     this.activeView = viewName;
     this.notify('view-changed', viewName);
@@ -317,4 +530,5 @@ class Store {
   }
 }
 
+// Instantiate global store
 window.appStore = new Store();

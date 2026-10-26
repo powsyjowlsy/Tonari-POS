@@ -1,4 +1,5 @@
 // Kitchen Display System (KDS) & Order Queue Controller for Tonari POS
+// Observes: Zero-Emoji Invariant, Tabular Numerals, Educational Commenting
 
 const KitchenController = {
   filter: 'active', // 'active' (Pending, Preparing, Ready) or 'all'
@@ -21,6 +22,14 @@ const KitchenController = {
       if (event === 'orders-updated' || event === 'order-placed') {
         this.render();
       }
+    });
+  },
+
+  bindEvents() {
+    this.filterButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.setFilter(btn.dataset.filter);
+      });
     });
   },
 
@@ -94,8 +103,11 @@ const KitchenController = {
 
       let itemsHtml = order.items.map(item => `
         <div class="kds-item-row">
-          <span class="kds-item-qty">${item.quantity}x</span>
-          <span class="kds-item-name">${item.name}</span>
+          <span class="kds-item-qty tabular-numbers">${item.quantity}x</span>
+          <span class="kds-item-name">
+            ${item.name}
+            ${item.flavor ? `<div class="kds-flavor-tag">[${item.flavor}]</div>` : ''}
+          </span>
         </div>
       `).join('');
 
@@ -103,7 +115,7 @@ const KitchenController = {
         <div class="kds-card status-${order.status.toLowerCase()}">
           <div class="kds-card-header">
             <div>
-              <span class="kds-order-id">#${order.id}</span>
+              <span class="kds-order-id font-mono">#${order.id}</span>
               <span class="kds-order-type">[${order.orderType}]</span>
             </div>
             <span class="kds-status-badge ${statusClass}">${order.status}</span>
@@ -111,7 +123,7 @@ const KitchenController = {
           
           <div class="kds-time-bar">
             <span>Placed: ${order.time}</span>
-            <span class="kds-elapsed">${elapsed}</span>
+            <span class="kds-elapsed tabular-numbers">${elapsed}</span>
           </div>
 
           <div class="kds-items-list">
@@ -143,14 +155,6 @@ const KitchenController = {
     this.container.querySelectorAll('.btn-mark-complete').forEach(btn => {
       btn.addEventListener('click', () => {
         window.appStore.updateOrderStatus(btn.dataset.id, 'Completed');
-      });
-    });
-  },
-
-  bindEvents() {
-    this.filterButtons.forEach(btn => {
-      btn.addEventListener('click', () => {
-        this.setFilter(btn.dataset.filter);
       });
     });
   }

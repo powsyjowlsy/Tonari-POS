@@ -89,7 +89,7 @@ body {
   height: 100vh;
   background-color: var(--bg-app);
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   transition: width 0.2s ease, height 0.2s ease;
   overflow: hidden;
   position: relative;
@@ -1428,4 +1428,735 @@ body {
 .btn-primary:disabled {
   background-color: #9CA3AF;
   cursor: not-allowed;
+}
+
+
+/* ==========================================================================
+   EXECUTIVE LEFT SIDEBAR NAVIGATION (Inspired by UI Reference)
+   Strict Invariants: Zero Gradients, Zero Emojis, Tabular Numerals
+   ========================================================================== */
+.pos-sidebar {
+  width: 240px;
+  background-color: #0B2545;
+  color: #FFFFFF;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  flex-shrink: 0;
+  border-right: 1px solid #1E3A60;
+  z-index: 100;
+  user-select: none;
+}
+
+.sidebar-brand {
+  padding: 18px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sidebar-logo-badge {
+  background-color: #B91C1C;
+  color: #FFFFFF;
+  font-weight: 900;
+  font-size: 15px;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: 0.5px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.sidebar-brand-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-store-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #FFFFFF;
+  line-height: 1.2;
+}
+
+.sidebar-store-subtitle {
+  font-size: 9px;
+  font-weight: 700;
+  color: #94A3B8;
+  letter-spacing: 0.8px;
+  margin-top: 2px;
+}
+
+.sidebar-menu-header {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748B;
+  padding: 18px 16px 8px;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.sidebar-nav {
+  flex: 1;
+  padding: 0 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+}
+
+.sidebar-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+  color: #CBD5E1;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  text-align: left;
+  width: 100%;
+}
+
+.sidebar-nav-item:hover {
+  background-color: rgba(255, 255, 255, 0.06);
+  color: #FFFFFF;
+}
+
+.sidebar-nav-item.active {
+  background-color: #1E40AF;
+  color: #FFFFFF;
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.nav-svg-icon {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2;
+  flex-shrink: 0;
+}
+
+.nav-label {
+  flex: 1;
+}
+
+.sidebar-footer {
+  padding: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background-color: #081B33;
+}
+
+.sidebar-user-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.user-avatar-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #1E3A60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+  color: #93C5FD;
+}
+
+.user-lane-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #F8FAFC;
+}
+
+.user-role-badge {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 800;
+  background-color: #F59E0B;
+  color: #1E293B;
+  padding: 1px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+.btn-sidebar-lock {
+  width: 100%;
+  padding: 7px 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  color: #94A3B8;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.btn-sidebar-lock:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #F1F5F9;
+}
+
+.btn-lock-svg {
+  width: 13px;
+  height: 13px;
+}
+
+/* ==========================================================================
+   MAIN WRAPPER & EXECUTIVE TOP BAR
+   ========================================================================== */
+.pos-main-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  background-color: var(--bg-app);
+}
+
+.pos-top-bar {
+  background-color: #FFFFFF;
+  border-bottom: 1px solid #E2E8F0;
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  gap: 16px;
+  z-index: 50;
+}
+
+.top-bar-title-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.page-title {
+  font-size: 19px;
+  font-weight: 800;
+  color: #0F172A;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.page-subtitle {
+  font-size: 12px;
+  color: #64748B;
+  margin-top: 2px;
+}
+
+.top-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn-top-utility {
+  background-color: #FFFFFF;
+  border: 1px solid #CBD5E1;
+  color: #334155;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.btn-top-utility:hover {
+  background-color: #F8FAFC;
+  border-color: #94A3B8;
+}
+
+.btn-top-primary {
+  background-color: #0B2545;
+  border: 1px solid #0B2545;
+  color: #FFFFFF;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.btn-top-primary:hover {
+  background-color: #163A63;
+}
+
+.top-action-svg {
+  width: 14px;
+  height: 14px;
+  stroke-width: 2;
+  flex-shrink: 0;
+}
+
+.top-meta-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 4px;
+}
+
+/* ==========================================================================
+   VIEW 0: STORE PERFORMANCE DASHBOARD (Inspired by UI Reference)
+   ========================================================================== */
+.dashboard-layout {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  overflow-y: auto;
+  height: 100%;
+}
+
+.dash-section-header {
+  font-size: 11px;
+  font-weight: 800;
+  color: #64748B;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.dash-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+.dash-kpi-card {
+  padding: 18px;
+  border-radius: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.dash-kpi-card.card-sales {
+  background-color: #0B2545;
+  color: #FFFFFF;
+}
+
+.dash-kpi-card.card-items {
+  background-color: #1E3A8A;
+  color: #FFFFFF;
+}
+
+.dash-kpi-card.card-trans {
+  background-color: #1E293B;
+  color: #FFFFFF;
+}
+
+.dash-kpi-card.card-alert {
+  background-color: #FFFBEB;
+  border: 1px solid #FCD34D;
+  color: #92400E;
+}
+
+.kpi-card-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.dash-kpi-card .kpi-label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  opacity: 0.9;
+}
+
+.dash-kpi-card.card-alert .kpi-label {
+  color: #B45309;
+}
+
+.dash-kpi-card .kpi-value {
+  font-size: 24px;
+  font-weight: 900;
+  line-height: 1.1;
+  margin-bottom: 4px;
+}
+
+.dash-kpi-card.card-alert .kpi-value {
+  color: #B45309;
+}
+
+.dash-kpi-card .kpi-caption {
+  font-size: 11px;
+  opacity: 0.8;
+}
+
+.dash-kpi-card.card-alert .kpi-caption {
+  color: #B45309;
+}
+
+.kpi-badge-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.kpi-badge-icon.badge-currency {
+  background-color: #F59E0B;
+  color: #1E293B;
+}
+
+.kpi-badge-icon.badge-box {
+  background-color: #F59E0B;
+  color: #1E293B;
+}
+
+.kpi-badge-icon.badge-tx {
+  background-color: #334155;
+  color: #F1F5F9;
+}
+
+.kpi-badge-icon.badge-warning {
+  background-color: #F59E0B;
+  color: #FFFFFF;
+  font-size: 18px;
+}
+
+/* 7-Day Trend Chart Card */
+.dash-chart-card {
+  background-color: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.chart-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.chart-card-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0F172A;
+  margin: 0;
+}
+
+.chart-card-subtitle {
+  font-size: 12px;
+  color: #64748B;
+  margin-top: 2px;
+}
+
+.chart-legend {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.legend-square {
+  width: 12px;
+  height: 12px;
+  background-color: #F59E0B;
+  border-radius: 2px;
+}
+
+.trend-bars-wrapper {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  height: 160px;
+  padding: 12px 14px 0;
+  background-color: #F8FAFC;
+  border: 1px solid #EDF2F7;
+  border-radius: 8px;
+  gap: 12px;
+}
+
+.trend-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  justify-content: flex-end;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.trend-col:hover {
+  transform: translateY(-2px);
+}
+
+.trend-col-amount {
+  font-size: 10px;
+  font-weight: 700;
+  color: #475569;
+  margin-bottom: 6px;
+}
+
+.trend-col-bar-wrap {
+  width: 38px;
+  height: 100px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.trend-col-bar {
+  width: 100%;
+  background-color: #F59E0B;
+  border-radius: 4px 4px 0 0;
+  transition: height 0.3s ease;
+}
+
+.trend-col-bar.bar-peak {
+  background-color: #D97706;
+  box-shadow: 0 0 0 2px #FDE68A;
+}
+
+.trend-col-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #1E293B;
+  margin-top: 6px;
+}
+
+.trend-col-sub {
+  font-size: 10px;
+  color: #94A3B8;
+}
+
+.trend-summary-callout {
+  margin-top: 14px;
+  background-color: #F1F5F9;
+  border: 1px solid #E2E8F0;
+  border-radius: 6px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.summary-callout-icon {
+  width: 16px;
+  height: 16px;
+  color: #475569;
+  flex-shrink: 0;
+}
+
+.summary-callout-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+}
+
+/* Recent Sales Table Card */
+.dash-table-card {
+  background-color: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.dash-table-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.dash-table-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0F172A;
+  margin: 0;
+}
+
+.btn-dash-link {
+  background: transparent;
+  border: none;
+  color: #2563EB;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.btn-dash-link:hover {
+  text-decoration: underline;
+  color: #1D4ED8;
+}
+
+/* ==========================================================================
+   MODIFIER, FLAVOR & WASTE STYLING (SRS RTM-FR-001, RTM-FR-009)
+   ========================================================================== */
+.flavor-count-pill {
+  background-color: #E0E7FF;
+  color: #3730A3;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid #C7D2FE;
+}
+
+.modifier-options-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.modifier-option-btn {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px;
+  border: 1px solid #CBD5E1;
+  border-radius: 6px;
+  background-color: #FFFFFF;
+  font-size: 14px;
+  font-weight: 700;
+  color: #1E293B;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.modifier-option-btn:hover {
+  background-color: #F8FAFC;
+  border-color: #94A3B8;
+}
+
+.modifier-option-btn.active {
+  border-color: #2563EB;
+  background-color: #EFF6FF;
+  color: #1D4ED8;
+}
+
+.modifier-check-indicator {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  background-color: #DBEAFE;
+  color: #1E40AF;
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: none;
+}
+
+.modifier-option-btn.active .modifier-check-indicator {
+  display: inline-block;
+}
+
+.cart-item-flavor {
+  font-size: 11px;
+  color: #475569;
+  margin-top: 2px;
+}
+
+.kds-flavor-tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 800;
+  color: #B45309;
+  background-color: #FEF3C7;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-top: 3px;
+}
+
+/* ==========================================================================
+   CASH DRAWER RECONCILIATION CARD (SRS RTM-FR-007)
+   ========================================================================== */
+.cash-drawer-reconcile-card {
+  background-color: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin-bottom: 18px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.drawer-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.drawer-stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.drawer-stat-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748B;
+  text-transform: uppercase;
+}
+
+.drawer-stat-val {
+  font-size: 15px;
+  font-weight: 800;
+  color: #0F172A;
+}
+
+.btn-primary-action {
+  background-color: var(--color-primary);
+  color: #FFFFFF;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.btn-primary-action:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.table-section-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: #0F172A;
+  margin-bottom: 10px;
 }

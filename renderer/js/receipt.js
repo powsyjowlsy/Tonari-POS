@@ -1,5 +1,5 @@
 // 58mm Thermal Receipt Generator & Printer Handler for Tonari POS
-// Strictly zero emojis, 100% tabular alignment
+// Observes: Zero-Emoji Invariant, 100% Tabular Alignment, Educational Commenting
 
 const ReceiptService = {
   // Generates clean 32-column text formatted for 58mm thermal rolls
@@ -43,6 +43,11 @@ const ReceiptService = {
       } else {
         lines.push(`${qtyStr}${item.name}`);
         lines.push(row('    ', `PHP ${lineTotal}`));
+      }
+
+      // Print flavor/modifier if specified
+      if (item.flavor) {
+        lines.push(`    Option: [${item.flavor}]`);
       }
     });
 

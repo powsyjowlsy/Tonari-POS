@@ -144,6 +144,32 @@
     border-radius: 0 !important;
     border: none !important;
     box-shadow: none !important;
+    flex-direction: column !important;
+  }
+
+  .pos-sidebar {
+    display: none !important;
+  }
+
+  .pos-main-wrapper {
+    height: 100vh !important;
+  }
+
+  .pos-top-bar {
+    padding: 8px 12px !important;
+  }
+
+  .top-bar-title-section {
+    display: none !important;
+  }
+
+  .dash-kpi-row {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
+
+  .drawer-stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
   }
 
   .desktop-nav-bar {
@@ -222,6 +248,31 @@
 }
 
 /* Apply same rules when running inside Simulator Mode .sim-mobile */
+#app-viewport-wrapper.sim-mobile {
+  flex-direction: column !important;
+}
+
+#app-viewport-wrapper.sim-mobile .pos-sidebar {
+  display: none !important;
+}
+
+#app-viewport-wrapper.sim-mobile .pos-main-wrapper {
+  height: 100% !important;
+}
+
+#app-viewport-wrapper.sim-mobile .top-bar-title-section {
+  display: none !important;
+}
+
+#app-viewport-wrapper.sim-mobile .dash-kpi-row {
+  grid-template-columns: repeat(2, 1fr) !important;
+  gap: 10px !important;
+}
+
+#app-viewport-wrapper.sim-mobile .drawer-stats-grid {
+  grid-template-columns: repeat(2, 1fr) !important;
+}
+
 #app-viewport-wrapper.sim-mobile .desktop-nav-bar {
   display: none !important;
 }
