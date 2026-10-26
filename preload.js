@@ -5,5 +5,5 @@ contextBridge.exposeInMainWorld('posNative', {
   printReceipt: (options) => ipcRenderer.invoke('print-receipt', options),
   saveCsvReport: (data) => ipcRenderer.invoke('save-csv-report', data),
   getNetworkInfo: () => ipcRenderer.invoke('get-network-info'),
-  getAppVersion: () => '1.0.0'
+  getAppVersion: () => '1.1.0'
 });

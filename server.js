@@ -71,7 +71,7 @@ const server = http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({
       appName: 'Tonari POS',
-      version: '1.0.0',
+      version: '1.1.0',
       localIp: getLocalNetworkIp(),
       port: PORT
     }));
