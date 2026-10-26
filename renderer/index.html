@@ -389,33 +389,33 @@
               <!-- Low-stock warnings injected here -->
             </div>
 
-            <div class="inventory-toolbar">
-              <div class="search-wrapper" style="max-width: 320px;">
-                <input type="text" id="inventory-search-input" class="search-input" placeholder="Filter by product name or ID...">
-              </div>
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <label for="inventory-category-select" class="font-small font-bold">Category:</label>
-                <select id="inventory-category-select" class="discount-select" style="padding: 6px 12px;">
-                  <option value="all">All Categories</option>
-                  <option value="curry">Katsu Curry</option>
-                  <option value="takoyaki">Takoyaki</option>
-                  <option value="ramen">Ramen</option>
-                  <option value="gyoza">Gyoza</option>
-                  <option value="wings">Ninja Wings</option>
-                  <option value="soda">Fruit Soda</option>
-                </select>
-              </div>
-              <div style="margin-left: auto;">
-                <button id="btn-open-waste-modal" class="btn-primary-action" style="background-color: var(--status-red);">
-                  Log Kitchen Waste / Spoilage
-                </button>
-              </div>
+            <!-- Inventory Sub-Navigation Segment Tabs (3 Distinct Tabs) -->
+            <div class="inventory-segment-nav" style="margin-bottom: 16px; display: flex; gap: 8px;">
+              <button type="button" id="btn-tab-inv-products" class="inv-segment-btn active">Menu Item Portions</button>
+              <button type="button" id="btn-tab-inv-ingredients" class="inv-segment-btn">Raw Ingredients &amp; Supplies</button>
+              <button type="button" id="btn-tab-inv-waste" class="inv-segment-btn">Kitchen Waste &amp; Spoilage Logs</button>
             </div>
 
-            <!-- Inventory Sub-Navigation Segment Tabs -->
-            <div class="inventory-segment-nav" style="margin-bottom: 16px; display: flex; gap: 8px;">
-              <button type="button" id="btn-tab-inv-products" class="inv-segment-btn active">Menu Item Portions (14)</button>
-              <button type="button" id="btn-tab-inv-ingredients" class="inv-segment-btn">Raw Ingredients &amp; Supplies (31)</button>
+            <div class="inventory-toolbar" style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 16px;">
+              <div class="search-wrapper" style="max-width: 220px;">
+                <input type="text" id="inventory-search-input" class="search-input" placeholder="Filter items or code...">
+              </div>
+              <div id="inventory-category-pills" class="inv-cat-pills-wrapper" style="display: flex; gap: 6px; flex-wrap: wrap;">
+                <!-- Dynamically populated by renderCategoryFilters() in inventory.js -->
+              </div>
+              <div class="inv-cat-select-wrapper" style="display: none; align-items: center; gap: 6px;">
+                <label for="inventory-category-select" class="font-small font-bold text-sub">Category:</label>
+                <select id="inventory-category-select" class="discount-select" style="padding: 6px 12px;">
+                  <option value="all">All Categories</option>
+                </select>
+              </div>
+              <div class="inventory-toolbar-actions" style="margin-left: auto; display: flex; gap: 8px; align-items: center;">
+                <button type="button" id="btn-open-add-product-modal" class="btn-primary" style="display: inline-flex;">+ Add Menu Item</button>
+                <button type="button" id="btn-open-add-ingredient-modal" class="btn-primary" style="display: none;">+ Add Raw Supply</button>
+                <button type="button" id="btn-open-waste-modal" class="btn-primary-action" style="background-color: var(--status-red);">
+                  Log Kitchen Waste
+                </button>
+              </div>
             </div>
 
             <!-- Master Menu Item Portions Table -->
@@ -463,18 +463,19 @@
             </div>
 
             <!-- Kitchen Waste & Spoilage Audit Log (SRS RTM-FR-009) -->
-            <div class="inventory-table-container" style="margin-top: 24px;">
+            <div id="waste-table-container" class="inventory-table-container" style="display: none;">
               <div class="table-section-title">Kitchen Waste &amp; Dropped Food Audit Trail</div>
               <table class="pos-table">
                 <thead>
                   <tr>
                     <th>Log ID</th>
                     <th>Time</th>
-                    <th>Wasted Product</th>
+                    <th>Item Type</th>
+                    <th>Wasted Item</th>
                     <th>Quantity</th>
-                    <th>Cost Lost</th>
+                    <th>Financial Loss</th>
                     <th>Reason</th>
-                    <th>Notes</th>
+                    <th>Staff Incident Notes</th>
                   </tr>
                 </thead>
                 <tbody id="waste-log-table-body">
@@ -844,23 +845,34 @@
        MODAL 5: KITCHEN WASTE & SPOILAGE MODAL (SRS RTM-FR-009)
        ============================================================== -->
   <div id="inventory-waste-modal" class="modal-overlay">
-    <div class="modal-box" style="max-width: 480px;">
+    <div class="modal-box" style="max-width: 500px;">
       <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
-        <span class="modal-title">Log Kitchen Waste / Dropped Food</span>
+        <span class="modal-title">Log Kitchen Waste / Spoilage</span>
         <button type="button" class="modal-close-btn" id="btn-x-close-waste-modal" title="Close dialog">&times;</button>
       </div>
 
       <div class="modal-body">
         <div style="margin-bottom: 14px;">
-          <label for="waste-product-select" class="field-label">Select Wasted Product:</label>
+          <label class="field-label" style="margin-bottom: 6px; display: block;">Waste Category Type:</label>
+          <div class="waste-type-toggle" style="display: flex; gap: 8px;">
+            <button type="button" id="btn-waste-type-dish" class="waste-type-btn active" data-type="product">Prepared Menu Dish</button>
+            <button type="button" id="btn-waste-type-supply" class="waste-type-btn" data-type="ingredient">Raw Kitchen Supply</button>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 14px;">
+          <label for="waste-product-select" id="waste-select-label" class="field-label">Select Wasted Dish:</label>
           <select id="waste-product-select" class="discount-select" style="width: 100%; padding: 8px 12px;">
             <!-- Populated dynamically -->
           </select>
         </div>
 
         <div style="margin-bottom: 14px;">
-          <label for="waste-qty-input" class="field-label">Wasted Quantity (Units):</label>
-          <input type="number" id="waste-qty-input" class="search-input" value="1" min="1" step="1">
+          <label for="waste-qty-input" class="field-label">Wasted Quantity:</label>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <input type="number" id="waste-qty-input" class="search-input" value="1" min="1" step="any" style="flex: 1;">
+            <span id="waste-unit-label" class="text-sub font-mono font-bold" style="min-width: 60px;">portions</span>
+          </div>
         </div>
 
         <div style="margin-bottom: 14px;">
@@ -869,7 +881,8 @@
             <option value="Dropped / Spilled">Dropped / Spilled during prep</option>
             <option value="Burned / Overcooked">Burned / Overcooked in kitchen</option>
             <option value="Expired / Spoiled">Expired / Quality check rejection</option>
-            <option value="Customer Return">Customer Return / Wrong assembly</option>
+            <option value="Damaged Packaging">Damaged packaging / Defective container</option>
+            <option value="Customer Return">Customer Return / Assembly error</option>
           </select>
         </div>
 
@@ -880,8 +893,153 @@
       </div>
 
       <div class="modal-footer">
-        <button id="btn-close-waste-modal" class="btn-secondary">Cancel</button>
-        <button id="btn-confirm-waste-log" class="btn-primary" style="background-color: var(--status-red);">Confirm Waste Deduction</button>
+        <button type="button" id="btn-close-waste-modal" class="btn-secondary">Cancel</button>
+        <button type="button" id="btn-confirm-waste-log" class="btn-primary" style="background-color: var(--status-red);">Confirm Waste Deduction</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==============================================================
+       MODAL: ADD RAW KITCHEN SUPPLY / INGREDIENT
+       ============================================================== -->
+  <div id="add-ingredient-modal" class="modal-overlay">
+    <div class="modal-box" style="max-width: 500px;">
+      <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <span class="modal-title">Add Raw Ingredient / Packaging Supply</span>
+        <button type="button" class="modal-close-btn" id="btn-x-close-add-ing-modal" title="Close dialog">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+          <div>
+            <label for="add-ing-name" class="field-label">Supply Name *</label>
+            <input type="text" id="add-ing-name" class="search-input" placeholder="e.g. Premium Beef Slices">
+          </div>
+          <div>
+            <label for="add-ing-category" class="field-label">Category</label>
+            <select id="add-ing-category" class="discount-select" style="width: 100%; padding: 8px 10px;">
+              <option value="Proteins">Proteins</option>
+              <option value="Starches">Starches</option>
+              <option value="Broths">Broths</option>
+              <option value="Sauces">Sauces</option>
+              <option value="Garnishes">Garnishes</option>
+              <option value="Beverages">Beverages</option>
+              <option value="Packaging">Packaging</option>
+              <option value="Supplies">Other Supplies</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+          <div>
+            <label for="add-ing-stock" class="field-label">Initial Physical Stock *</label>
+            <input type="number" id="add-ing-stock" class="search-input" value="100" min="0" step="any">
+          </div>
+          <div>
+            <label for="add-ing-unit" class="field-label">Measurement Unit *</label>
+            <select id="add-ing-unit" class="discount-select" style="width: 100%; padding: 8px 10px;">
+              <option value="g">Grams (g)</option>
+              <option value="ml">Milliliters (ml)</option>
+              <option value="pcs">Pieces (pcs)</option>
+              <option value="slices">Slices</option>
+              <option value="portions">Portions</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+          <div>
+            <label for="add-ing-threshold" class="field-label">Min Alert Threshold</label>
+            <input type="number" id="add-ing-threshold" class="search-input" value="20" min="1" step="any">
+          </div>
+          <div>
+            <label for="add-ing-cost" class="field-label">Unit Cost (PHP)</label>
+            <input type="number" id="add-ing-cost" class="search-input" value="0.50" min="0" step="0.01">
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" id="btn-close-add-ing-modal" class="btn-secondary">Cancel</button>
+        <button type="button" id="btn-save-add-ing" class="btn-primary">Save Raw Supply</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==============================================================
+       MODAL: ADD FINISHED MENU ITEM WITH RECIPE BOM BUILDER
+       ============================================================== -->
+  <div id="add-product-modal" class="modal-overlay">
+    <div class="modal-box" style="max-width: 620px; max-height: 90vh; display: flex; flex-direction: column;">
+      <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <span class="modal-title">Create Menu Item &amp; Recipe BOM</span>
+        <button type="button" class="modal-close-btn" id="btn-x-close-add-prod-modal" title="Close dialog">&times;</button>
+      </div>
+
+      <div class="modal-body" style="overflow-y: auto; padding-right: 8px;">
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px; margin-bottom: 12px;">
+          <div>
+            <label for="add-prod-name" class="field-label">Product Name *</label>
+            <input type="text" id="add-prod-name" class="search-input" placeholder="e.g. Spicy Chicken Katsu Bowl">
+          </div>
+          <div>
+            <label for="add-prod-price" class="field-label">Retail Price (PHP) *</label>
+            <input type="number" id="add-prod-price" class="search-input" placeholder="185.00" min="0" step="0.01">
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+          <div>
+            <label for="add-prod-category" class="field-label">Category</label>
+            <select id="add-prod-category" class="discount-select" style="width: 100%; padding: 8px 10px;">
+              <option value="curry">Katsu Curry</option>
+              <option value="takoyaki">Takoyaki</option>
+              <option value="ramen">Ramen</option>
+              <option value="gyoza">Gyoza</option>
+              <option value="wings">Ninja Wings</option>
+              <option value="soda">Fruit Soda</option>
+              <option value="specials">Chef Specials</option>
+            </select>
+          </div>
+          <div>
+            <label for="add-prod-minstock" class="field-label">Min Alert Portions</label>
+            <input type="number" id="add-prod-minstock" class="search-input" value="5" min="1">
+          </div>
+        </div>
+
+        <div style="margin-bottom: 12px;">
+          <label for="add-prod-desc" class="field-label">Description (Optional)</label>
+          <input type="text" id="add-prod-desc" class="search-input" placeholder="Crispy panko chicken with rich Japanese curry sauce">
+        </div>
+
+        <div style="margin-bottom: 14px;">
+          <label for="add-prod-modifiers" class="field-label">Modifiers / Flavors (Optional, comma-separated)</label>
+          <input type="text" id="add-prod-modifiers" class="search-input" placeholder="Mild, Medium Spicy, Extra Hot">
+        </div>
+
+        <!-- Recipe Bill of Materials Section -->
+        <div class="recipe-bom-section" style="border-top: 1px solid var(--border-color); padding-top: 14px; margin-top: 14px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <div>
+              <div class="font-bold text-main" style="font-size: 14px;">Recipe Bill of Materials (BOM)</div>
+              <div class="text-sub font-small">Select ingredients and quantities needed to prepare 1 single portion.</div>
+            </div>
+            <button type="button" id="btn-add-bom-row" class="btn-secondary" style="font-size: 12px; padding: 4px 10px;">+ Add Supply</button>
+          </div>
+
+          <div id="recipe-bom-rows-container" style="display: flex; flex-direction: column; gap: 8px;">
+            <!-- Dynamic rows populated by inventory.js -->
+          </div>
+
+          <div id="recipe-bom-yield-callout" class="trend-summary-callout" style="margin-top: 12px; padding: 10px 14px; display: none;">
+            <span class="summary-callout-text" id="recipe-bom-yield-text">Estimated portion yield based on current raw stock: 0 portions</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" id="btn-close-add-prod-modal" class="btn-secondary">Cancel</button>
+        <button type="button" id="btn-save-add-prod" class="btn-primary">Create Menu Product</button>
       </div>
     </div>
   </div>

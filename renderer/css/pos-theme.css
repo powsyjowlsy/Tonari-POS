@@ -2725,5 +2725,199 @@ body {
   color: #FFFFFF;
 }
 
+/* Bi-Directional Restock & Adjust Buttons */
+.btn-restock-minus {
+  background-color: #FFF1F2;
+  border: 1px solid #FECDD3;
+  color: #BE123C;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+  transition: all 0.15s ease;
+}
+
+.btn-restock-minus:hover {
+  background-color: #BE123C;
+  border-color: #BE123C;
+  color: #FFFFFF;
+}
+
+.btn-restock-plus {
+  background-color: #F0FDF4;
+  border: 1px solid #BBF7D0;
+  color: #15803D;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+  transition: all 0.15s ease;
+}
+
+.btn-restock-plus:hover {
+  background-color: #15803D;
+  border-color: #15803D;
+  color: #FFFFFF;
+}
+
+.btn-restock-adjust {
+  background-color: #F8FAFC;
+  border: 1px solid #CBD5E1;
+  color: #334155;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-restock-adjust:hover {
+  background-color: #0F172A;
+  border-color: #0F172A;
+  color: #FFFFFF;
+}
+
+/* --------------------------------------------------------------------------
+   Dynamic Category Filter Button Pills
+   -------------------------------------------------------------------------- */
+.inv-cat-pills-wrapper {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.inv-cat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border: 1px solid var(--border-medium, #E2E8F0);
+  background-color: #FFFFFF;
+  color: var(--text-sub, #475569);
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 1.2;
+}
+
+.inv-cat-pill:hover {
+  background-color: #F1F5F9;
+  border-color: #CBD5E1;
+  color: var(--text-main, #0F172A);
+}
+
+.inv-cat-pill.active {
+  background-color: var(--color-primary, #B91C1C);
+  border-color: var(--color-primary, #B91C1C);
+  color: #FFFFFF;
+  font-weight: 700;
+}
+
+.inv-cat-pill .pill-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1px 6px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 700;
+  background-color: #F1F5F9;
+  color: var(--text-sub, #64748B);
+  font-variant-numeric: tabular-nums;
+  transition: all 0.15s ease;
+}
+
+.inv-cat-pill.active .pill-badge {
+  background-color: rgba(255, 255, 255, 0.25);
+  color: #FFFFFF;
+}
+
+/* Waste Modal Type Switcher */
+.waste-type-toggle {
+  display: flex;
+  gap: 8px;
+  background-color: #F1F5F9;
+  padding: 4px;
+  border-radius: 6px;
+  border: 1px solid #E2E8F0;
+}
+
+.waste-type-btn {
+  flex: 1;
+  padding: 7px 12px;
+  border: none;
+  background: transparent;
+  color: #64748B;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: center;
+}
+
+.waste-type-btn.active {
+  background-color: #FFFFFF;
+  color: var(--text-main, #0F172A);
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* Item Type Badges in Waste Table */
+.badge-dish {
+  background-color: #EFF6FF;
+  color: #1D4ED8;
+  border: 1px solid #BFDBFE;
+}
+
+.badge-supply {
+  background-color: #F5F3FF;
+  color: #6D28D9;
+  border: 1px solid #DDD6FE;
+}
+
+/* Recipe BOM Multi-Row Builder */
+.recipe-bom-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 60px 32px;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 10px;
+  background-color: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 6px;
+}
+
+.recipe-bom-del-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 4px;
+  background-color: #FEE2E2;
+  border: 1px solid #FECDD3;
+  color: #DC2626;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 1;
+}
+
+.recipe-bom-del-btn:hover {
+  background-color: #DC2626;
+  border-color: #DC2626;
+  color: #FFFFFF;
+}
+
 
 

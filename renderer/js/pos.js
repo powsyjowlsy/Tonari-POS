@@ -149,18 +149,58 @@ const PosController = {
         this.closeModifierModal();
       });
     }
+
+    // Delegated event listener for product card and customize/add button clicks
+    if (this.productGrid) {
+      this.productGrid.addEventListener('click', (e) => {
+        const card = e.target.closest('.product-card');
+        if (!card) return;
+
+        const prodId = card.dataset.id;
+        const prod = window.appStore.products.find(p => p.id === prodId);
+        if (!prod) return;
+
+        const portions = typeof window.appStore.computeAvailablePortions === 'function'
+          ? window.appStore.computeAvailablePortions(prodId)
+          : (prod.stock !== undefined ? prod.stock : 0);
+
+        if (portions <= 0) {
+          window.appStore.notify('cart-error', `"${prod.name}" is currently sold out.`);
+          return;
+        }
+
+        const currentCartQty = window.appStore.cart
+          .filter(item => item.id === prodId)
+          .reduce((sum, item) => sum + item.quantity, 0);
+
+        if (currentCartQty >= portions) {
+          window.appStore.notify('cart-error', `Cannot add more "${prod.name}". All ${portions} available portion(s) are already in your cart.`);
+          return;
+        }
+
+        if (prod.modifiers && prod.modifiers.length > 0) {
+          this.openModifierModal(prod);
+        } else {
+          window.appStore.addToCart(prod);
+        }
+      });
+    }
   },
 
   // --------------------------------------------------------------------------
   // Modifier Modal Handling (SRS RTM-FR-001)
   // --------------------------------------------------------------------------
   openModifierModal(product) {
+    if (!product) return;
     this.selectedProductForModifier = product;
     this.modifierModal = this.modifierModal || document.getElementById('modifier-modal');
     if (!this.modifierModal) return;
 
-    document.getElementById('mod-product-name').textContent = product.name;
-    document.getElementById('mod-product-price').textContent = `PHP ${product.price.toFixed(2)}`;
+    const priceNum = Number(product.price) || 0;
+    const nameEl = document.getElementById('mod-product-name');
+    const priceEl = document.getElementById('mod-product-price');
+    if (nameEl) nameEl.textContent = product.name;
+    if (priceEl) priceEl.textContent = `PHP ${priceNum.toFixed(2)}`;
 
     const optionsContainer = document.getElementById('mod-options-container');
     if (optionsContainer && product.modifiers) {
@@ -324,48 +364,7 @@ const PosController = {
     });
 
     this.productGrid.innerHTML = html;
-
-    // Attach card and button click handlers with modifier gate and stock gating
-    this.productGrid.querySelectorAll('.product-card').forEach(card => {
-      const handleProductSelection = (e) => {
-        if (e) {
-          e.stopPropagation();
-        }
-        const prodId = card.dataset.id;
-        const prod = window.appStore.products.find(p => p.id === prodId);
-        if (!prod) return;
-
-        const portions = typeof window.appStore.computeAvailablePortions === 'function'
-          ? window.appStore.computeAvailablePortions(prodId)
-          : (prod.stock !== undefined ? prod.stock : 0);
-
-        if (portions <= 0) {
-          window.appStore.notify('cart-error', `"${prod.name}" is currently sold out.`);
-          return;
-        }
-
-        const currentCartQty = window.appStore.cart
-          .filter(item => item.id === prodId)
-          .reduce((sum, item) => sum + item.quantity, 0);
-
-        if (currentCartQty >= portions) {
-          window.appStore.notify('cart-error', `Cannot add more "${prod.name}". All ${portions} available portion(s) are already in your cart.`);
-          return;
-        }
-
-        if (prod.modifiers && prod.modifiers.length > 0) {
-          this.openModifierModal(prod);
-        } else {
-          window.appStore.addToCart(prod);
-        }
-      };
-
-      card.addEventListener('click', handleProductSelection);
-      const actionBtn = card.querySelector('.btn-add-item');
-      if (actionBtn) {
-        actionBtn.addEventListener('click', handleProductSelection);
-      }
-    });
+    // Note: Click handling on .product-card and .btn-add-item is managed via the delegated event listener on this.productGrid in bindEvents()
   },
 
   // --------------------------------------------------------------------------

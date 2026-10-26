@@ -458,20 +458,96 @@ class Store {
   }
 
   replenishIngredient(ingredientId, amount) {
+    return this.adjustIngredientStock(ingredientId, amount);
+  }
+
+  // Bi-directional supply adjustment supporting positive restock and negative shrinkage/correction
+  adjustIngredientStock(ingredientId, delta) {
     if (!ingredientId) return false;
     const ing = this.ingredients.find(i => i.id === ingredientId);
     if (!ing) return false;
 
-    const addQty = Math.max(0, Number(amount) || 0);
-    if (addQty <= 0) return false;
+    const change = Number(delta);
+    if (isNaN(change) || change === 0) return false;
 
-    ing.stock = (Number(ing.stock) || 0) + addQty;
+    ing.stock = Math.max(0, (Number(ing.stock) || 0) + change);
     this.saveIngredients();
     this.refreshProductPortions();
 
     this.notify('ingredients-updated', this.ingredients);
     this.notify('products-updated', this.products);
     return true;
+  }
+
+  // Add new raw kitchen ingredient or packaging supply
+  addIngredient(data) {
+    if (!data || !data.name || !data.unit) return { success: false, error: 'Name and Unit are required' };
+
+    const id = data.id && data.id.trim() 
+      ? data.id.trim().toUpperCase() 
+      : 'ING-' + data.name.trim().toUpperCase().replace(/[^A-Z0-9]/g, '-').slice(0, 15);
+
+    if (this.ingredients.some(i => i.id === id)) {
+      return { success: false, error: `Ingredient ID "${id}" already exists.` };
+    }
+
+    const newIng = {
+      id: id,
+      name: data.name.trim(),
+      category: data.category || 'Proteins',
+      stock: Math.max(0, Number(data.stock) || 0),
+      unit: data.unit.trim().toLowerCase(),
+      minStock: Math.max(1, Number(data.minStock) || 10),
+      costPerUnit: Math.max(0, Number(data.costPerUnit) || 0)
+    };
+
+    this.ingredients.push(newIng);
+    this.saveIngredients();
+    this.notify('ingredients-updated', this.ingredients);
+    return { success: true, ingredient: newIng };
+  }
+
+  // Add new finished menu item with optional Recipe BOM decomposition
+  addProduct(data, recipeItems = []) {
+    if (!data || !data.name) return { success: false, error: 'Product name is required' };
+
+    const catCode = (data.category || 'OTH').slice(0, 3).toUpperCase();
+    const id = data.id && data.id.trim()
+      ? data.id.trim().toUpperCase()
+      : `TN-${catCode}-${Date.now().toString().slice(-4)}`;
+
+    if (this.products.some(p => p.id === id)) {
+      return { success: false, error: `Product ID "${id}" already exists.` };
+    }
+
+    const newProd = {
+      id: id,
+      name: data.name.trim(),
+      category: data.category || 'curry',
+      categoryName: data.categoryName || data.category || 'Menu Item',
+      price: Math.max(0, parseFloat(data.price) || 0),
+      description: data.description ? data.description.trim() : '',
+      minStock: Math.max(1, parseInt(data.minStock, 10) || 5),
+      stock: 0,
+      modifiers: Array.isArray(data.modifiers) ? data.modifiers : (data.modifiers ? data.modifiers.split(',').map(m => m.trim()).filter(Boolean) : [])
+    };
+
+    // Associate Recipe BOM if ingredients were selected
+    if (Array.isArray(recipeItems) && recipeItems.length > 0) {
+      this.recipes[id] = recipeItems.map(r => ({
+        ingredientId: r.ingredientId,
+        quantity: Math.max(0.01, Number(r.quantity) || 1)
+      }));
+      this.saveRecipes();
+    }
+
+    this.products.push(newProd);
+    newProd.stock = this.computeAvailablePortions(newProd.id);
+    this.saveProducts();
+
+    this.notify('products-updated', this.products);
+    this.notify('recipes-updated', this.recipes);
+    return { success: true, product: newProd };
   }
 
   setIngredientStock(ingredientId, newStock) {
@@ -695,52 +771,121 @@ class Store {
     }
   }
 
-  logKitchenWaste(productId, quantity, reason, notes) {
-    const prod = this.products.find(p => p.id === productId);
-    if (!prod) return false;
+  logKitchenWaste(itemId, arg2, arg3, arg4, arg5) {
+    let itemType = 'product';
+    let quantity = 1;
+    let reason = 'Dropped / Spilled';
+    let notes = '';
 
-    const qty = parseInt(quantity, 10);
-    if (isNaN(qty) || qty <= 0) return false;
-
-    const recipe = this.recipes ? this.recipes[productId] : null;
-    if (recipe && Array.isArray(recipe) && recipe.length > 0) {
-      recipe.forEach(req => {
-        const reqQty = req.quantity !== undefined ? Number(req.quantity) : (req.reqQty !== undefined ? Number(req.reqQty) : 0);
-        const ing = this.ingredients.find(i => i.id === req.ingredientId);
-        if (ing && reqQty > 0) {
-          ing.stock = Math.max(0, (Number(ing.stock) || 0) - (reqQty * qty));
-        }
-      });
-      this.saveIngredients();
-      this.refreshProductPortions();
-      this.notify('ingredients-updated', this.ingredients);
+    if (typeof arg2 === 'string' && (arg2 === 'ingredient' || arg2 === 'product')) {
+      itemType = arg2;
+      quantity = arg3;
+      reason = arg4;
+      notes = arg5;
     } else {
-      prod.stock = Math.max(0, prod.stock - qty);
-      this.saveProducts();
+      // Legacy signature: logKitchenWaste(productId, quantity, reason, notes)
+      quantity = arg2;
+      reason = arg3;
+      notes = arg4;
+      // Infer itemType if itemId matches an ingredient vs product
+      if (this.ingredients && this.ingredients.some(i => i.id === itemId)) {
+        itemType = 'ingredient';
+      }
     }
 
-    // Record audit log
+    const qty = parseFloat(quantity);
+    if (isNaN(qty) || qty <= 0) return false;
+
     const now = new Date();
-    const wasteEntry = {
-      id: 'WST-' + (1000 + this.wasteLogs.length + 1),
-      date: now.toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' }),
-      time: now.toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit', hour12: true }),
-      timestamp: now.toISOString(),
-      productId: prod.id,
-      productName: prod.name,
-      quantity: qty,
-      unitPrice: prod.price,
-      costLost: (qty * prod.price).toFixed(2),
-      reason: reason || 'Dropped / Spilled',
-      notes: notes || 'Logged by kitchen staff'
-    };
+    const dateStr = now.toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' });
+    const timeStr = now.toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit', hour12: true });
+    const logId = 'WST-' + (1000 + this.wasteLogs.length + 1);
 
-    this.wasteLogs.unshift(wasteEntry);
-    this.saveWasteLogs();
+    if (itemType === 'ingredient') {
+      const ing = this.ingredients.find(i => i.id === itemId);
+      if (!ing) return false;
 
-    this.notify('products-updated', this.products);
-    this.notify('waste-logs-updated', this.wasteLogs);
-    return true;
+      ing.stock = Math.max(0, (Number(ing.stock) || 0) - qty);
+      this.saveIngredients();
+      this.refreshProductPortions();
+
+      const unitCost = Number(ing.costPerUnit) || 0;
+      const costLost = (qty * unitCost).toFixed(2);
+      const wasteEntry = {
+        id: logId,
+        date: dateStr,
+        time: timeStr,
+        timestamp: now.toISOString(),
+        itemId: ing.id,
+        productId: ing.id,
+        itemName: ing.name,
+        productName: ing.name,
+        itemType: 'Raw Supply',
+        quantity: qty,
+        unit: ing.unit || 'units',
+        formattedQuantity: `${qty} ${ing.unit || 'units'}`,
+        unitPrice: unitCost,
+        costLost: costLost,
+        reason: reason || 'Dropped / Spoilage',
+        notes: notes || 'Raw supply waste logged'
+      };
+
+      this.wasteLogs.unshift(wasteEntry);
+      this.saveWasteLogs();
+
+      this.notify('ingredients-updated', this.ingredients);
+      this.notify('products-updated', this.products);
+      this.notify('waste-logs-updated', this.wasteLogs);
+      return true;
+    } else {
+      // Menu Dish
+      const prod = this.products.find(p => p.id === itemId);
+      if (!prod) return false;
+
+      const recipe = this.recipes ? this.recipes[itemId] : null;
+      if (recipe && Array.isArray(recipe) && recipe.length > 0) {
+        recipe.forEach(req => {
+          const reqQty = req.quantity !== undefined ? Number(req.quantity) : (req.reqQty !== undefined ? Number(req.reqQty) : 0);
+          const ing = this.ingredients.find(i => i.id === req.ingredientId);
+          if (ing && reqQty > 0) {
+            ing.stock = Math.max(0, (Number(ing.stock) || 0) - (reqQty * qty));
+          }
+        });
+        this.saveIngredients();
+        this.refreshProductPortions();
+        this.notify('ingredients-updated', this.ingredients);
+      } else {
+        prod.stock = Math.max(0, (Number(prod.stock) || 0) - qty);
+        this.saveProducts();
+      }
+
+      const costLost = (qty * prod.price).toFixed(2);
+      const wasteEntry = {
+        id: logId,
+        date: dateStr,
+        time: timeStr,
+        timestamp: now.toISOString(),
+        itemId: prod.id,
+        productId: prod.id,
+        itemName: prod.name,
+        productName: prod.name,
+        itemType: 'Menu Dish',
+        quantity: qty,
+        unit: 'portions',
+        formattedQuantity: `${qty} portions`,
+        unitPrice: prod.price,
+        costLost: costLost,
+        reason: reason || 'Dropped / Spilled',
+        notes: notes || 'Menu dish waste logged'
+      };
+
+      this.wasteLogs.unshift(wasteEntry);
+      this.saveWasteLogs();
+
+      this.notify('products-updated', this.products);
+      this.notify('waste-logs-updated', this.wasteLogs);
+      return true;
+    }
   }
 
   // --------------------------------------------------------------------------
