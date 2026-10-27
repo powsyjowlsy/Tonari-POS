@@ -15,7 +15,8 @@ class Store {
       USERS: 'tonari_pos_users',
       CURRENT_USER: 'tonari_pos_current_user',
       INGREDIENTS: 'tonari_pos_ingredients',
-      RECIPES: 'tonari_pos_recipes'
+      RECIPES: 'tonari_pos_recipes',
+      CATEGORIES: 'tonari_pos_categories'
     };
 
     // Core In-Memory Domain State
@@ -27,6 +28,7 @@ class Store {
     this.currentUser = this.loadCurrentUser();
     this.ingredients = this.loadIngredients();
     this.recipes = this.loadRecipes();
+    this.categories = this.loadCategories();
 
     // Synchronize product stock with initial limiting ingredient bottleneck counts
     this.refreshProductPortions();
@@ -308,6 +310,96 @@ class Store {
     }
     this.notify('users-updated', this.users);
     return { success: true };
+  }
+
+  // --------------------------------------------------------------------------
+  // Category Management & Persistence Handlers
+  // --------------------------------------------------------------------------
+  loadCategories() {
+    try {
+      const data = localStorage.getItem(this.STORAGE_KEYS.CATEGORIES);
+      if (data) {
+        const parsed = JSON.parse(data);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {
+      console.warn('Could not parse categories from localStorage:', e);
+    }
+    return [
+      { id: 'curry', name: 'Katsu Curry', type: 'menu' },
+      { id: 'takoyaki', name: 'Takoyaki', type: 'menu' },
+      { id: 'ramen', name: 'Ramen', type: 'menu' },
+      { id: 'gyoza', name: 'Gyoza', type: 'menu' },
+      { id: 'wings', name: 'Ninja Wings', type: 'menu' },
+      { id: 'soda', name: 'Fruit Soda', type: 'menu' },
+      { id: 'Proteins', name: 'Proteins', type: 'raw' },
+      { id: 'Starches', name: 'Starches', type: 'raw' },
+      { id: 'Broths', name: 'Broths', type: 'raw' },
+      { id: 'Sauces', name: 'Sauces', type: 'raw' },
+      { id: 'Garnishes', name: 'Garnishes', type: 'raw' },
+      { id: 'Beverages', name: 'Beverages', type: 'raw' },
+      { id: 'Packaging', name: 'Packaging', type: 'raw' }
+    ];
+  }
+
+  saveCategories() {
+    try {
+      localStorage.setItem(this.STORAGE_KEYS.CATEGORIES, JSON.stringify(this.categories));
+    } catch (e) {
+      console.error('Failed to save categories:', e);
+    }
+  }
+
+  addCategory(categoryData) {
+    if (!categoryData || !categoryData.name) {
+      return { success: false, error: 'Category name is required.' };
+    }
+    const name = categoryData.name.trim();
+    const type = categoryData.type || 'menu';
+    const id = categoryData.id ? categoryData.id.trim().toLowerCase() : name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+
+    if (this.categories.some(c => c.id === id || c.name.toLowerCase() === name.toLowerCase())) {
+      return { success: false, error: `Category "${name}" already exists.` };
+    }
+
+    const newCat = { id, name, type, description: categoryData.description || '' };
+    this.categories.push(newCat);
+    this.saveCategories();
+    this.notify('categories-updated', this.categories);
+    return { success: true, category: newCat };
+  }
+
+  deleteCategory(categoryId) {
+    const idx = this.categories.findIndex(c => c.id === categoryId);
+    if (idx === -1) return { success: false, error: 'Category not found.' };
+    this.categories.splice(idx, 1);
+    this.saveCategories();
+    this.notify('categories-updated', this.categories);
+    return { success: true };
+  }
+
+  // --------------------------------------------------------------------------
+  // Role-Based Access Control (RBAC) & Privileges
+  // --------------------------------------------------------------------------
+  hasPrivilege(privilegeKey, user = null) {
+    const u = user || this.currentUser;
+    if (!u) return false;
+    const role = u.role || 'Cashier';
+    if (role === 'Admin') return true;
+
+    const PERMISSIONS = {
+      Cashier: ['pos_order', 'dashboard_view'],
+      Kitchen: ['kds_view', 'inv_waste']
+    };
+
+    return (PERMISSIONS[role] || []).includes(privilegeKey);
+  }
+
+  // --------------------------------------------------------------------------
+  // In-App Toast Event Helper
+  // --------------------------------------------------------------------------
+  showToast(message, type = 'info', duration = 3500) {
+    this.notify('show-toast', { message, type, duration });
   }
 
   // --------------------------------------------------------------------------

@@ -80,6 +80,14 @@
           </svg>
           <span class="nav-label">Sales &amp; Z-Reading</span>
         </button>
+
+        <!-- 6. Admin & Access Control -->
+        <button class="sidebar-nav-item" data-view="admin" id="nav-item-admin">
+          <svg class="nav-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          </svg>
+          <span class="nav-label">Admin Dashboard</span>
+        </button>
       </nav>
 
       <!-- Sidebar Bottom Staff Identity & Lock -->
@@ -400,16 +408,22 @@
               <div class="search-wrapper" style="max-width: 220px;">
                 <input type="text" id="inventory-search-input" class="search-input" placeholder="Filter items or code...">
               </div>
-              <div id="inventory-category-pills" class="inv-cat-pills-wrapper" style="display: flex; gap: 6px; flex-wrap: wrap;">
-                <!-- Dynamically populated by renderCategoryFilters() in inventory.js -->
-              </div>
-              <div class="inv-cat-select-wrapper" style="display: none; align-items: center; gap: 6px;">
-                <label for="inventory-category-select" class="font-small font-bold text-sub">Category:</label>
-                <select id="inventory-category-select" class="discount-select" style="padding: 6px 12px;">
+              
+              <!-- Permanent Category Dropdown List -->
+              <div class="inv-cat-dropdown-group">
+                <label for="inventory-category-select">Category:</label>
+                <select id="inventory-category-select" class="inv-cat-dropdown-select">
                   <option value="all">All Categories</option>
                 </select>
               </div>
+
+              <!-- Quick-Filter Category Pills -->
+              <div id="inventory-category-pills" class="inv-cat-pills-wrapper" style="display: flex; gap: 6px; flex-wrap: wrap;">
+                <!-- Dynamically populated by renderCategoryFilters() in inventory.js -->
+              </div>
+
               <div class="inventory-toolbar-actions" style="margin-left: auto; display: flex; gap: 8px; align-items: center;">
+                <button type="button" id="btn-open-add-category-modal" class="btn-secondary">+ Add Category</button>
                 <button type="button" id="btn-open-add-product-modal" class="btn-primary" style="display: inline-flex;">+ Add Menu Item</button>
                 <button type="button" id="btn-open-add-ingredient-modal" class="btn-primary" style="display: none;">+ Add Raw Supply</button>
                 <button type="button" id="btn-open-waste-modal" class="btn-primary-action" style="background-color: var(--status-red);">
@@ -598,7 +612,112 @@
           </div>
         </section>
 
-      </main>
+        <!-- ==============================================================
+             VIEW 6: ADMIN & ACCESS CONTROL DASHBOARD
+             ============================================================== -->
+        <section id="view-admin" class="app-view-panel">
+          <div class="admin-view-container">
+            <div class="admin-header-row">
+              <div class="admin-title-wrap">
+                <h1>Admin &amp; Access Control</h1>
+                <p>System privilege matrices, staff account administration, and catalog category management.</p>
+              </div>
+            </div>
+
+            <!-- Admin Sub-Navigation Tabs -->
+            <div class="admin-subnav">
+              <button type="button" class="admin-nav-btn active" data-tab="accounts">Staff Accounts</button>
+              <button type="button" class="admin-nav-btn" data-tab="privileges">Role Privilege Matrix</button>
+              <button type="button" class="admin-nav-btn" data-tab="categories">Category Management</button>
+            </div>
+
+            <!-- Tab 1: Staff Accounts -->
+            <div id="admin-tab-accounts" class="admin-tab-pane">
+              <div class="admin-cards-grid">
+                <div class="admin-stat-card">
+                  <span class="admin-stat-label">Total Staff Accounts</span>
+                  <span id="admin-stat-total-users" class="admin-stat-val">3</span>
+                </div>
+                <div class="admin-stat-card">
+                  <span class="admin-stat-label">Active System Role</span>
+                  <span id="admin-stat-current-role" class="admin-stat-val">Admin</span>
+                </div>
+                <div class="admin-stat-card">
+                  <span class="admin-stat-label">Access Gating</span>
+                  <span class="admin-stat-val" style="color: #16A34A; font-size: 18px;">PIN Enforced</span>
+                </div>
+              </div>
+
+              <div class="admin-table-card">
+                <div class="admin-table-toolbar">
+                  <h2 class="admin-table-title">Registered Staff Profiles &amp; Roles</h2>
+                  <button type="button" id="btn-admin-create-user" class="btn-primary">+ Create New Staff Account</button>
+                </div>
+                <table class="pos-table">
+                  <thead>
+                    <tr>
+                      <th>Account ID</th>
+                      <th>Staff Name</th>
+                      <th>Username</th>
+                      <th>System Role</th>
+                      <th>PIN Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="admin-users-table-body">
+                    <!-- Populated by admin.js -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Tab 2: Role Privilege Matrix -->
+            <div id="admin-tab-privileges" class="admin-tab-pane" style="display: none;">
+              <div class="admin-table-card">
+                <div class="admin-table-toolbar">
+                  <h2 class="admin-table-title">Operational Feature Access by Role</h2>
+                </div>
+                <table class="pos-table privilege-matrix-table">
+                  <thead>
+                    <tr>
+                      <th>System Feature / Operational Area</th>
+                      <th>Admin / Manager</th>
+                      <th>Cashier</th>
+                      <th>Kitchen Staff</th>
+                    </tr>
+                  </thead>
+                  <tbody id="admin-privilege-matrix-body">
+                    <!-- Populated by admin.js -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Tab 3: Category Management -->
+            <div id="admin-tab-categories" class="admin-tab-pane" style="display: none;">
+              <div class="admin-table-card">
+                <div class="admin-table-toolbar">
+                  <h2 class="admin-table-title">Active Product &amp; Supply Categories</h2>
+                  <button type="button" id="btn-admin-add-category" class="btn-primary">+ Add New Category</button>
+                </div>
+                <table class="pos-table">
+                  <thead>
+                    <tr>
+                      <th>Category ID</th>
+                      <th>Category Name</th>
+                      <th>Type</th>
+                      <th>Description</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="admin-categories-table-body">
+                    <!-- Populated by admin.js -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
 
     </div>
 
@@ -1242,6 +1361,136 @@
     </div>
   </div>
 
+  <!-- Modal: Staff Account Management (Create / Edit) -->
+  <div id="admin-user-modal" class="modal-overlay modal-backdrop">
+    <div class="modal-box modal-card" style="max-width: 440px;">
+      <div class="modal-header">
+        <h3 id="admin-user-modal-title" class="modal-title">Create Staff Account</h3>
+        <button type="button" class="modal-close-btn" id="btn-close-admin-user-modal" title="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="admin-user-id" value="">
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label class="form-label" for="admin-user-name">Full Name</label>
+          <input type="text" id="admin-user-name" class="form-input" placeholder="e.g. Maria Santos">
+        </div>
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label class="form-label" for="admin-user-username">Username</label>
+          <input type="text" id="admin-user-username" class="form-input" placeholder="e.g. maria">
+        </div>
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label class="form-label" for="admin-user-role">System Role</label>
+          <select id="admin-user-role" class="form-input">
+            <option value="Cashier">Cashier (Order Entry &amp; Cart)</option>
+            <option value="Kitchen">Kitchen (Queue &amp; Waste Logs)</option>
+            <option value="Admin">Admin (Unrestricted Full Access)</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label class="form-label" for="admin-user-pin">4-Digit Security PIN</label>
+          <input type="password" id="admin-user-pin" class="form-input font-mono" maxlength="6" placeholder="****">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="btn-cancel-admin-user" class="btn-secondary">Cancel</button>
+        <button type="button" id="btn-save-admin-user" class="btn-primary">Save Account</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Dynamic Category Creation -->
+  <div id="admin-category-modal" class="modal-overlay modal-backdrop">
+    <div class="modal-box modal-card" style="max-width: 420px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Add New Category</h3>
+        <button type="button" class="modal-close-btn" id="btn-close-admin-cat-modal" title="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label class="form-label" for="admin-cat-name">Category Name</label>
+          <input type="text" id="admin-cat-name" class="form-input" placeholder="e.g. Desserts, Hot Teas, Dairy">
+        </div>
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label class="form-label" for="admin-cat-type">Category Type</label>
+          <select id="admin-cat-type" class="form-input">
+            <option value="menu">Menu Dish (Visible on POS Catalog)</option>
+            <option value="raw">Raw Kitchen Supply (Inventory Only)</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label class="form-label" for="admin-cat-desc">Description (Optional)</label>
+          <input type="text" id="admin-cat-desc" class="form-input" placeholder="e.g. Sweet pastries and soft-serve items">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="btn-cancel-admin-cat" class="btn-secondary">Cancel</button>
+        <button type="button" id="btn-save-admin-cat" class="btn-primary">Create Category</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Custom Stock Adjustment (Replaces native prompt) -->
+  <div id="restock-adjust-modal" class="modal-overlay modal-backdrop">
+    <div class="modal-box modal-card" style="max-width: 400px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Adjust Physical Stock</h3>
+        <button type="button" class="modal-close-btn" id="btn-close-adjust-modal" title="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="adjust-ingredient-id" value="">
+        <p class="font-small text-sub" style="margin-bottom: 12px;">
+          Adjusting count for: <strong id="adjust-ingredient-name" class="text-main"></strong>
+        </p>
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label class="form-label" for="adjust-stock-delta">Stock Adjustment Delta (<span id="adjust-ingredient-unit">g</span>)</label>
+          <input type="number" id="adjust-stock-delta" class="form-input font-mono tabular-nums" step="any" placeholder="Use negative for deduction, positive for addition">
+          <span class="font-small text-sub" style="display: block; margin-top: 4px;">Example: +500 to add stock, or -250 for prep trim</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="btn-cancel-restock-adjust" class="btn-secondary">Cancel</button>
+        <button type="button" id="btn-confirm-restock-adjust" class="btn-primary">Apply Adjustment</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Structured Order Voiding (Replaces native prompt) -->
+  <div id="order-void-modal" class="modal-overlay modal-backdrop">
+    <div class="modal-box modal-card" style="max-width: 420px;">
+      <div class="modal-header">
+        <h3 class="modal-title text-danger">Void Customer Order</h3>
+        <button type="button" class="modal-close-btn" id="btn-close-order-void-modal" title="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="void-order-id" value="">
+        <p class="font-small text-sub" style="margin-bottom: 12px;">
+          Voiding Order <strong id="void-order-label" class="text-main font-mono"></strong> (<span id="void-order-amount" class="tabular-price font-bold"></span>)
+        </p>
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label class="form-label" for="void-order-reason-select">Official Void Reason</label>
+          <select id="void-order-reason-select" class="form-input">
+            <option value="Customer cancellation">Customer cancellation</option>
+            <option value="Cashier input error">Cashier input error</option>
+            <option value="Defective or spilled dish">Defective or spilled dish</option>
+            <option value="Payment processing discrepancy">Payment processing discrepancy</option>
+            <option value="Other">Other (specify below)</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label class="form-label" for="void-order-notes">Audit Notes (Optional)</label>
+          <input type="text" id="void-order-notes" class="form-input" placeholder="Additional audit details...">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="btn-cancel-order-void" class="btn-secondary">Cancel</button>
+        <button type="button" id="btn-confirm-order-void" class="btn-void-order" style="padding: 8px 16px;">Confirm Void &amp; Restore Inventory</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- In-App Floating Toast Notification Container -->
+  <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+
   <!-- Application Logic Scripts -->
   <script src="js/data.js"></script>
   <script src="js/state.js"></script>
@@ -1252,6 +1501,7 @@
   <script src="js/sales.js"></script>
   <script src="js/dashboard.js"></script>
   <script src="js/pos.js"></script>
+  <script src="js/admin.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

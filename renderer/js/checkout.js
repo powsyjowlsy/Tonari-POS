@@ -14,7 +14,7 @@ const CheckoutController = {
   openCheckout() {
     const summary = window.appStore.getCartSummary();
     if (summary.totalItems === 0) {
-      alert('Cannot checkout: Cart is empty.');
+      window.appStore.showToast('Cannot checkout: Cart is empty.', 'warning');
       return;
     }
 
@@ -145,7 +145,7 @@ const CheckoutController = {
     if (this.currentMethod === 'Cash') {
       const tenderedNum = parseFloat(this.tenderedString || '0');
       if (tenderedNum < totalDue) {
-        alert('Insufficient cash tendered.');
+        window.appStore.showToast('Insufficient cash tendered. Please enter at least PHP ' + totalDue.toFixed(2), 'warning');
         return;
       }
       tendered = tenderedNum.toFixed(2);

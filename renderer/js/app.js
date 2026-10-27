@@ -135,6 +135,45 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // --------------------------------------------------------------------------
+  // In-App Modern Toast Notification Engine
+  // --------------------------------------------------------------------------
+  const ToastManager = {
+    container: document.getElementById('toast-container'),
+
+    init() {
+      if (!this.container) {
+        this.container = document.createElement('div');
+        this.container.id = 'toast-container';
+        document.body.appendChild(this.container);
+      }
+      if (window.appStore) {
+        window.appStore.subscribe((event, data) => {
+          if (event === 'show-toast' && data) {
+            this.show(data.message, data.type, data.duration);
+          }
+        });
+      }
+    },
+
+    show(message, type = 'info', duration = 3500) {
+      if (!this.container) this.init();
+      const toast = document.createElement('div');
+      toast.className = `app-toast app-toast-${type}`;
+      toast.textContent = message;
+      this.container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(12px)';
+        setTimeout(() => toast.remove(), 260);
+      }, duration);
+    }
+  };
+  ToastManager.init();
+  window.ToastManager = ToastManager;
+
+  // --------------------------------------------------------------------------
   // 2. Initialize Subsystem Controllers
   // --------------------------------------------------------------------------
   if (window.DashboardController) window.DashboardController.init();
@@ -143,6 +182,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (window.KitchenController) window.KitchenController.init();
   if (window.InventoryController) window.InventoryController.init();
   if (window.SalesController) window.SalesController.init();
+  if (window.AdminController) window.AdminController.init();
 
   // --------------------------------------------------------------------------
   // 3. Real-Time Header Clock
@@ -188,15 +228,33 @@ document.addEventListener('DOMContentLoaded', async () => {
     sales: {
       title: 'Sales Analytics & Z-Reading',
       subtitle: 'Daily ledger, cash drawer float reconciliation and CSV export.'
+    },
+    admin: {
+      title: 'Admin & Access Control',
+      subtitle: 'Staff accounts, role privilege matrices and catalog categories.'
     }
   };
 
   // --------------------------------------------------------------------------
-  // 5. Central Navigation Switcher
+  // 5. Central Navigation Switcher & RBAC Access Gating
   // --------------------------------------------------------------------------
   function switchView(viewName) {
     if (!VIEW_TITLES[viewName]) {
       viewName = 'dashboard';
+    }
+
+    // Evaluate Role Privileges
+    const currentUser = window.appStore.currentUser;
+    const userRole = (currentUser && currentUser.role) ? currentUser.role : 'Cashier';
+
+    if (viewName === 'admin' && userRole !== 'Admin') {
+      window.appStore.showToast(`Access Restricted: Staff role "${userRole}" is not authorized for Admin Dashboard.`, 'error');
+      return;
+    }
+
+    if (viewName === 'sales' && userRole === 'Kitchen') {
+      window.appStore.showToast('Access Restricted: Kitchen staff cannot view Sales Analytics.', 'error');
+      return;
     }
 
     window.appStore.setView(viewName);
@@ -210,12 +268,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Hide all view panels
     document.querySelectorAll('.app-view-panel').forEach(panel => {
       panel.classList.remove('active');
+      panel.style.display = '';
     });
 
     // Show target view panel
     const targetPanel = document.getElementById(`view-${viewName}`);
     if (targetPanel) {
       targetPanel.classList.add('active');
+      targetPanel.style.display = '';
     }
 
     // Update Sidebar Nav Items
@@ -239,6 +299,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (viewName === 'kitchen' && window.KitchenController) window.KitchenController.render();
     if (viewName === 'inventory' && window.InventoryController) window.InventoryController.render();
     if (viewName === 'sales' && window.SalesController) window.SalesController.render();
+    if (viewName === 'admin' && window.AdminController) window.AdminController.render();
   }
 
   window.switchAppView = switchView;
@@ -266,7 +327,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (btnLock) {
     btnLock.addEventListener('click', () => {
       window.appStore.lockTerminal();
-      alert('Terminal locked. Enter Manager PIN to authorize administrative actions.');
+      window.appStore.showToast('Terminal locked. Enter Manager PIN to authorize administrative actions.', 'info');
     });
   }
 

@@ -86,6 +86,14 @@ const SalesController = {
       });
     }
 
+    // Structured Void Modal triggers
+    const btnCloseVoid = document.getElementById('btn-close-order-void-modal');
+    if (btnCloseVoid) btnCloseVoid.addEventListener('click', () => this.closeVoidModal());
+    const btnCancelVoid = document.getElementById('btn-cancel-order-void');
+    if (btnCancelVoid) btnCancelVoid.addEventListener('click', () => this.closeVoidModal());
+    const btnConfirmVoid = document.getElementById('btn-confirm-order-void');
+    if (btnConfirmVoid) btnConfirmVoid.addEventListener('click', () => this.submitOrderVoid());
+
     // Touch PIN Keypad Buttons (0-9, Clear/C, DEL/Backspace)
     const keypad = document.getElementById('manager-touch-keypad');
     if (keypad) {
@@ -272,13 +280,52 @@ const SalesController = {
 
     const orderId = this.pendingVoidOrderId;
     this.closePinModal();
+    this.openVoidModal(orderId);
+  },
 
-    const reason = prompt(`Enter official reason for voiding Order #${orderId}:`, 'Customer cancellation / cashier input error');
-    if (reason !== null && reason.trim() !== '') {
-      const success = window.appStore.voidOrder(orderId, reason.trim());
-      if (success) {
-        alert(`Order #${orderId} has been officially voided. Inventory stock has been restored.`);
-      }
+  openVoidModal(orderId) {
+    const modal = document.getElementById('order-void-modal');
+    if (!modal) return;
+    const order = (window.appStore.orders || []).find(o => o.id === orderId);
+    if (!order) return;
+
+    this.pendingVoidOrderId = orderId;
+    const idInput = document.getElementById('void-order-id');
+    const labelEl = document.getElementById('void-order-label');
+    const amountEl = document.getElementById('void-order-amount');
+    const notesInput = document.getElementById('void-order-notes');
+
+    if (idInput) idInput.value = order.id;
+    if (labelEl) labelEl.textContent = '#' + order.id;
+    if (amountEl) amountEl.textContent = 'PHP ' + Number(order.totalDue || 0).toFixed(2);
+    if (notesInput) notesInput.value = '';
+
+    modal.classList.add('modal-visible');
+  },
+
+  closeVoidModal() {
+    const modal = document.getElementById('order-void-modal');
+    if (modal) modal.classList.remove('modal-visible');
+    this.pendingVoidOrderId = null;
+  },
+
+  submitOrderVoid() {
+    if (!this.pendingVoidOrderId) return;
+    const orderId = this.pendingVoidOrderId;
+    const reasonSelect = document.getElementById('void-order-reason-select');
+    const notesInput = document.getElementById('void-order-notes');
+
+    const baseReason = reasonSelect ? reasonSelect.value : 'Customer cancellation';
+    const notes = notesInput ? notesInput.value.trim() : '';
+    const fullReason = notes ? `${baseReason} - ${notes}` : baseReason;
+
+    const success = window.appStore.voidOrder(orderId, fullReason);
+    if (success) {
+      window.appStore.showToast(`Order #${orderId} officially voided. Inventory restored.`, 'success');
+      this.closeVoidModal();
+      this.render();
+    } else {
+      window.appStore.showToast('Failed to void order.', 'error');
     }
   },
 
@@ -436,7 +483,7 @@ const SalesController = {
   exportCsv() {
     const orders = window.appStore.orders;
     if (orders.length === 0) {
-      alert('Cannot export: No transaction records to export.');
+      window.appStore.showToast('Cannot export: No transaction records to export.', 'warning');
       return;
     }
 
@@ -500,7 +547,7 @@ const SalesController = {
       window.posNative.saveCsvReport({ filename, content: csvContent })
         .then(res => {
           if (res && res.success) {
-            alert(`Sales report CSV successfully saved to:\n${res.filePath}`);
+            window.appStore.showToast(`Sales report CSV saved to: ${res.filePath}`, 'success');
           }
         })
         .catch(err => {

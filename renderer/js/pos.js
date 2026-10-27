@@ -25,46 +25,21 @@ const PosController = {
         this.renderProducts();
       } else if (event === 'cart-updated' || event === 'order-type-changed') {
         this.renderCart();
-      } else if (event === 'category-changed') {
+      } else if (event === 'category-changed' || event === 'categories-updated') {
         this.renderCategories();
         this.renderProducts();
       } else if (event === 'search-changed') {
         this.renderProducts();
       } else if (event === 'cart-error') {
-        this.showCartNotification(payload || 'Cannot add item to cart: Insufficient stock.');
+        window.appStore.showToast(payload || 'Cannot add item to cart: Insufficient stock.', 'error');
       }
     });
   },
 
   showCartNotification(msg) {
-    let toast = document.getElementById('pos-cart-toast');
-    if (!toast) {
-      toast = document.createElement('div');
-      toast.id = 'pos-cart-toast';
-      toast.style.position = 'fixed';
-      toast.style.bottom = '20px';
-      toast.style.right = '20px';
-      toast.style.backgroundColor = 'var(--status-red, #B91C1C)';
-      toast.style.color = '#FFFFFF';
-      toast.style.padding = '10px 16px';
-      toast.style.borderRadius = '6px';
-      toast.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
-      toast.style.zIndex = '9999';
-      toast.style.fontWeight = '600';
-      toast.style.fontSize = '13px';
-      toast.style.transition = 'opacity 0.2s ease';
-      document.body.appendChild(toast);
+    if (window.appStore && typeof window.appStore.showToast === 'function') {
+      window.appStore.showToast(msg, 'error');
     }
-    toast.textContent = msg;
-    toast.style.opacity = '1';
-    toast.style.display = 'block';
-    clearTimeout(this._toastTimer);
-    this._toastTimer = setTimeout(() => {
-      if (toast) {
-        toast.style.opacity = '0';
-        setTimeout(() => { if (toast) toast.style.display = 'none'; }, 200);
-      }
-    }, 3500);
   },
 
   bindEvents() {
@@ -104,9 +79,8 @@ const PosController = {
     document.querySelectorAll('.btn-clear-cart').forEach(btn => {
       btn.addEventListener('click', () => {
         if (window.appStore.cart.length > 0) {
-          if (confirm('Are you sure you want to clear the entire cart?')) {
-            window.appStore.clearCart();
-          }
+          window.appStore.clearCart();
+          window.appStore.showToast('Order cart cleared.', 'info');
         }
       });
     });
@@ -268,11 +242,21 @@ const PosController = {
   renderCategories() {
     if (!this.categoryNav) return;
 
-    const categories = window.DEFAULT_CATEGORIES || [];
+    const storeCategories = (window.appStore && window.appStore.categories) ? window.appStore.categories : [];
+    const menuCategories = storeCategories.filter(c => c.type !== 'raw');
+    
+    // Fallback if empty
+    const catList = menuCategories.length > 0 ? menuCategories : (window.DEFAULT_CATEGORIES || []);
     const active = window.appStore.activeCategory;
 
-    let html = '';
-    categories.forEach(cat => {
+    let html = `
+      <button class="category-pill ${active === 'all' ? 'active' : ''}" data-id="all">
+        All Items
+      </button>
+    `;
+
+    catList.forEach(cat => {
+      if (cat.id === 'all') return;
       const isActive = cat.id === active;
       html += `
         <button class="category-pill ${isActive ? 'active' : ''}" data-id="${cat.id}">
@@ -438,17 +422,25 @@ const PosController = {
             </div>
 
             <div class="cart-item-actions">
-              <div class="cart-item-stepper">
-                <button class="btn-qty-minus" data-key="${itemKey}">-</button>
+              <div class="cart-stepper-pill cart-item-stepper">
+                <button type="button" class="btn-qty-step btn-qty-minus" data-key="${itemKey}" title="Decrease quantity">
+                  <svg viewBox="0 0 24 24" fill="none"><path d="M5 12h14"></path></svg>
+                </button>
                 <span class="cart-item-qty tabular-numbers">${item.quantity}</span>
-                <button class="btn-qty-plus" data-key="${itemKey}">+</button>
+                <button type="button" class="btn-qty-step btn-qty-plus" data-key="${itemKey}" title="Increase quantity">
+                  <svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14"></path></svg>
+                </button>
               </div>
 
               <div class="cart-item-line-total tabular-price">
                 PHP ${itemLineTotal}
               </div>
 
-              <button class="btn-remove-line" data-key="${itemKey}" title="Remove item">&times;</button>
+              <button type="button" class="btn-remove-line" data-key="${itemKey}" title="Remove item from order">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path>
+                </svg>
+              </button>
             </div>
           </div>
         `;

@@ -37,7 +37,7 @@ const InventoryController = {
 
     // Subscribe to reactive appStore state updates
     window.appStore.subscribe((event) => {
-      if (event === 'products-updated' || event === 'waste-logs-updated' || event === 'ingredients-updated' || event === 'recipes-updated') {
+      if (event === 'products-updated' || event === 'waste-logs-updated' || event === 'ingredients-updated' || event === 'recipes-updated' || event === 'categories-updated') {
         this.renderCategoryFilters();
         this.render();
       }
@@ -45,6 +45,13 @@ const InventoryController = {
   },
 
   bindEvents() {
+    // Custom Stock Adjustment Modal triggers
+    const btnCloseAdjust = document.getElementById('btn-close-adjust-modal');
+    if (btnCloseAdjust) btnCloseAdjust.addEventListener('click', () => this.closeAdjustModal());
+    const btnCancelAdjust = document.getElementById('btn-cancel-restock-adjust');
+    if (btnCancelAdjust) btnCancelAdjust.addEventListener('click', () => this.closeAdjustModal());
+    const btnConfirmAdjust = document.getElementById('btn-confirm-restock-adjust');
+    if (btnConfirmAdjust) btnConfirmAdjust.addEventListener('click', () => this.submitAdjustModal());
     // 3-Tab Segment Switching
     if (this.btnTabProducts) {
       this.btnTabProducts.addEventListener('click', () => this.switchSubTab('products'));
@@ -170,27 +177,52 @@ const InventoryController = {
     let categories = [];
     let itemCounts = {};
 
+    // Retrieve registered categories from persistent store matching current subtab
+    const registeredCats = (window.appStore.categories || []).filter(c => {
+      if (this.currentSubTab === 'products') return c.type === 'menu';
+      if (this.currentSubTab === 'ingredients') return c.type === 'raw';
+      return false;
+    });
+
     if (this.currentSubTab === 'products') {
       const prods = window.appStore.products || [];
       itemCounts['all'] = prods.length;
+
+      // Seed with registered categories from store
+      registeredCats.forEach(c => {
+        if (!categories.includes(c.name)) {
+          categories.push(c.name);
+          itemCounts[c.name] = 0;
+        }
+      });
+
       prods.forEach(p => {
         const cat = p.categoryName || p.category || 'Other';
-        if (!itemCounts[cat]) {
-          itemCounts[cat] = 0;
+        if (!categories.includes(cat)) {
           categories.push(cat);
+          itemCounts[cat] = 0;
         }
-        itemCounts[cat]++;
+        itemCounts[cat] = (itemCounts[cat] || 0) + 1;
       });
     } else if (this.currentSubTab === 'ingredients') {
       const ings = window.appStore.ingredients || [];
       itemCounts['all'] = ings.length;
+
+      // Seed with registered raw categories from store
+      registeredCats.forEach(c => {
+        if (!categories.includes(c.name)) {
+          categories.push(c.name);
+          itemCounts[c.name] = 0;
+        }
+      });
+
       ings.forEach(i => {
         const cat = i.category || 'Supplies';
-        if (!itemCounts[cat]) {
-          itemCounts[cat] = 0;
+        if (!categories.includes(cat)) {
           categories.push(cat);
+          itemCounts[cat] = 0;
         }
-        itemCounts[cat]++;
+        itemCounts[cat] = (itemCounts[cat] || 0) + 1;
       });
     } else if (this.currentSubTab === 'waste') {
       const logs = window.appStore.wasteLogs || [];
@@ -271,16 +303,17 @@ const InventoryController = {
     const newThreshold = parseInt(document.getElementById('edit-item-threshold').value, 10);
 
     if (isNaN(newPrice) || newPrice < 0) {
-      alert('Please enter a valid unit price.');
+      window.appStore.showToast('Please enter a valid unit price.', 'warning');
       return;
     }
 
     if (isNaN(newThreshold) || newThreshold < 1) {
-      alert('Please enter a valid stock alert threshold (minimum 1).');
+      window.appStore.showToast('Please enter a valid stock alert threshold (minimum 1).', 'warning');
       return;
     }
 
     window.appStore.updateProductDetails(this.selectedProduct.id, newPrice, newThreshold);
+    window.appStore.showToast(`Updated product settings for ${this.selectedProduct.name}.`, 'success');
     this.closeEditModal();
   },
 
@@ -367,20 +400,16 @@ const InventoryController = {
     const notes = notesInput ? notesInput.value.trim() : '';
 
     if (isNaN(qty) || qty <= 0) {
-      alert('Please enter a valid wasted quantity (greater than 0).');
+      window.appStore.showToast('Please enter a valid wasted quantity (greater than 0).', 'warning');
       return;
     }
 
     const opt = selectEl.options[selectEl.selectedIndex];
     const availableStock = opt ? parseFloat(opt.dataset.stock) : Infinity;
 
-    if (qty > availableStock && availableStock > 0) {
-      const confirmExceed = confirm(`Wasted quantity (${qty}) exceeds recorded stock (${availableStock}). Proceed with stock deduction?`);
-      if (!confirmExceed) return;
-    }
-
     const success = window.appStore.logKitchenWaste(itemId, this.currentWasteType, qty, reason, notes);
     if (success) {
+      window.appStore.showToast('Kitchen waste recorded.', 'success');
       this.closeWasteModal();
       this.render();
     }
@@ -398,6 +427,15 @@ const InventoryController = {
     if (threshInput) threshInput.value = '20';
     const costInput = document.getElementById('add-ing-cost');
     if (costInput) costInput.value = '0.50';
+
+    // Populate dynamic raw categories
+    const catSelect = document.getElementById('add-ing-category');
+    if (catSelect && window.appStore && window.appStore.categories) {
+      const rawCats = window.appStore.categories.filter(c => c.type === 'raw');
+      if (rawCats.length > 0) {
+        catSelect.innerHTML = rawCats.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+      }
+    }
 
     if (this.addIngModal) {
       this.addIngModal.classList.add('modal-visible');
@@ -419,7 +457,7 @@ const InventoryController = {
     const costInput = document.getElementById('add-ing-cost');
 
     if (!nameInput || !nameInput.value.trim()) {
-      alert('Please enter a valid supply name.');
+      window.appStore.showToast('Please enter a valid supply name.', 'warning');
       return;
     }
 
@@ -433,11 +471,12 @@ const InventoryController = {
     });
 
     if (result && result.success) {
+      window.appStore.showToast(`Raw supply "${nameInput.value.trim()}" created.`, 'success');
       this.closeAddIngredientModal();
       this.renderCategoryFilters();
       this.render();
     } else {
-      alert(result && result.error ? result.error : 'Failed to add raw supply.');
+      window.appStore.showToast(result && result.error ? result.error : 'Failed to add raw supply.', 'error');
     }
   },
 
@@ -461,6 +500,15 @@ const InventoryController = {
     }
 
     this.updateRecipeBomYield();
+
+    // Populate dynamic menu categories
+    const catSelect = document.getElementById('add-prod-category');
+    if (catSelect && window.appStore && window.appStore.categories) {
+      const menuCats = window.appStore.categories.filter(c => c.type === 'menu');
+      if (menuCats.length > 0) {
+        catSelect.innerHTML = menuCats.map(c => `<option value="${c.id || c.name.toLowerCase()}">${c.name}</option>`).join('');
+      }
+    }
 
     if (this.addProdModal) {
       this.addProdModal.classList.add('modal-visible');
@@ -492,7 +540,11 @@ const InventoryController = {
       </select>
       <input type="number" class="recipe-ing-qty search-input" value="${qty}" min="0.01" step="any" placeholder="Qty">
       <span class="recipe-ing-unit text-sub font-mono font-bold" style="font-size: 11px;">units</span>
-      <button type="button" class="recipe-bom-del-btn" title="Remove ingredient">&times;</button>
+      <button type="button" class="recipe-bom-del-btn" title="Remove ingredient">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path>
+        </svg>
+      </button>
     `;
 
     const selectEl = row.querySelector('.recipe-ing-select');
@@ -574,13 +626,13 @@ const InventoryController = {
     const modInput = document.getElementById('add-prod-modifiers');
 
     if (!nameInput || !nameInput.value.trim()) {
-      alert('Product name is required.');
+      window.appStore.showToast('Product name is required.', 'warning');
       return;
     }
 
     const price = parseFloat(priceInput.value);
     if (isNaN(price) || price < 0) {
-      alert('Please enter a valid retail price.');
+      window.appStore.showToast('Please enter a valid retail price.', 'warning');
       return;
     }
 
@@ -608,11 +660,12 @@ const InventoryController = {
     }, recipeRows);
 
     if (result && result.success) {
+      window.appStore.showToast(`Menu product "${nameInput.value.trim()}" created.`, 'success');
       this.closeAddProductModal();
       this.renderCategoryFilters();
       this.render();
     } else {
-      alert(result && result.error ? result.error : 'Failed to create product.');
+      window.appStore.showToast(result && result.error ? result.error : 'Failed to create product.', 'error');
     }
   },
 
@@ -800,24 +853,59 @@ const InventoryController = {
       });
     });
 
-    // Attach custom physical stock adjust handler
+    // Attach custom physical stock adjust handler (via custom modal, not native prompt)
     this.ingredientsTableBody.querySelectorAll('.btn-restock-adjust').forEach(btn => {
       btn.addEventListener('click', () => {
         const ingId = btn.dataset.id;
         const name = btn.dataset.name;
         const unit = btn.dataset.unit;
-        const input = prompt(`Enter stock adjustment for "${name}" (use negative number to deduct, positive to restock in ${unit}):`, '0');
-        if (input === null) return;
-
-        const delta = parseFloat(input);
-        if (isNaN(delta) || delta === 0) return;
-
-        const success = window.appStore.adjustIngredientStock(ingId, delta);
-        if (success) {
-          this.render();
-        }
+        this.openAdjustModal(ingId, name, unit);
       });
     });
+  },
+
+  openAdjustModal(ingId, name, unit) {
+    const modal = document.getElementById('restock-adjust-modal');
+    if (!modal) return;
+    const idInput = document.getElementById('adjust-ingredient-id');
+    const nameEl = document.getElementById('adjust-ingredient-name');
+    const unitEl = document.getElementById('adjust-ingredient-unit');
+    const deltaInput = document.getElementById('adjust-stock-delta');
+
+    if (idInput) idInput.value = ingId;
+    if (nameEl) nameEl.textContent = name;
+    if (unitEl) unitEl.textContent = unit;
+    if (deltaInput) deltaInput.value = '';
+
+    modal.classList.add('modal-visible');
+  },
+
+  closeAdjustModal() {
+    const modal = document.getElementById('restock-adjust-modal');
+    if (modal) modal.classList.remove('modal-visible');
+  },
+
+  submitAdjustModal() {
+    const idInput = document.getElementById('adjust-ingredient-id');
+    const deltaInput = document.getElementById('adjust-stock-delta');
+    if (!idInput || !deltaInput) return;
+
+    const ingId = idInput.value;
+    const delta = parseFloat(deltaInput.value);
+
+    if (isNaN(delta) || delta === 0) {
+      window.appStore.showToast('Please enter a non-zero adjustment number.', 'warning');
+      return;
+    }
+
+    const success = window.appStore.adjustIngredientStock(ingId, delta);
+    if (success) {
+      window.appStore.showToast(`Stock adjusted by ${delta > 0 ? '+' : ''}${delta}.`, 'success');
+      this.closeAdjustModal();
+      this.render();
+    } else {
+      window.appStore.showToast('Failed to adjust stock.', 'error');
+    }
   },
 
   // --------------------------------------------------------------------------
