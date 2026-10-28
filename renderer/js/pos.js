@@ -62,17 +62,25 @@ const PosController = {
 
     // Discount dropdown selector
     const discountSelect = document.getElementById('cart-discount-select');
+    const mobileDiscountSelect = document.getElementById('mobile-cart-discount-select');
+    // Keeps both selects in sync and pushes the rate to the store.
+    const applyDiscountValue = (val) => {
+      if (discountSelect && discountSelect.value !== val) discountSelect.value = val;
+      if (mobileDiscountSelect && mobileDiscountSelect.value !== val) mobileDiscountSelect.value = val;
+      if (val === 'student') {
+        window.appStore.setDiscount(0.05, 'Student (5%)');
+      } else if (val === 'pwd_senior') {
+        window.appStore.setDiscount(0.20, 'Senior / PWD (20%)');
+      } else {
+        window.appStore.setDiscount(0, 'None');
+      }
+    };
     if (discountSelect) {
-      discountSelect.addEventListener('change', (e) => {
-        const val = e.target.value;
-        if (val === 'student') {
-          window.appStore.setDiscount(0.05, 'Student (5%)');
-        } else if (val === 'pwd_senior') {
-          window.appStore.setDiscount(0.20, 'Senior / PWD (20%)');
-        } else {
-          window.appStore.setDiscount(0, 'None');
-        }
-      });
+      discountSelect.addEventListener('change', (e) => applyDiscountValue(e.target.value));
+    }
+    // Handheld parity: the mobile cart drawer exposes the same discount control.
+    if (mobileDiscountSelect) {
+      mobileDiscountSelect.addEventListener('change', (e) => applyDiscountValue(e.target.value));
     }
 
     // Clear cart buttons (Desktop & Mobile)

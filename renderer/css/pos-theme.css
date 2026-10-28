@@ -17,7 +17,7 @@
   
   --text-main: #111827;
   --text-secondary: #374151;
-  --text-sub: #6B7280;
+  --text-sub: #475569;
   --text-white: #FFFFFF;
   
   /* Brand Crimson (Traditional Japanese Lacquer / Tonari Identity) */
@@ -48,9 +48,9 @@
   --status-blue-bg: #DBEAFE;
   --status-blue-border: #93C5FD;
 
-  /* Typography */
-  --font-base: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --font-mono: "Consolas", "Courier New", monospace;
+  /* Professional Typography: Utilitarian & Hardware Systems Pairing */
+  --font-base: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: 'IBM Plex Mono', "Consolas", "Courier New", monospace;
 }
 
 /* Base Reset */
@@ -84,9 +84,32 @@ body {
 .cart-item-qty,
 .receipt-paper,
 .kds-elapsed,
-.kpi-metric-val {
+.kpi-metric-val,
+.kpi-value,
+.admin-stat-val,
+.stock-metric-val,
+.cart-subtotal-val,
+.cart-discount-val,
+.cart-total-items-val,
+.clock-display,
+.void-order-amount-text {
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
+}
+
+/* Calibrated Tracking: Negative tracking on prominent headings & metrics */
+.kpi-value,
+.admin-stat-val,
+.modal-title,
+.dash-card-title {
+  letter-spacing: -0.025em;
+}
+
+/* Dark Surface Optical Leading Compensation */
+.pos-sidebar,
+.modal-header,
+.kds-header {
+  line-height: 1.45;
 }
 
 /* Global Typography Utility Classes */
@@ -95,8 +118,8 @@ body {
 }
 
 .font-small {
-  font-size: 11px;
-  line-height: 1.35;
+  font-size: 12px;
+  line-height: 1.4;
 }
 
 .font-mono {
@@ -200,7 +223,7 @@ body {
 .network-pill {
   background-color: #2D3748;
   color: #93C5FD;
-  font-size: 11px;
+  font-size: 12px;
   padding: 3px 8px;
   border-radius: 4px;
   font-family: var(--font-mono);
@@ -210,7 +233,7 @@ body {
 .cashier-badge {
   background-color: #2D3748;
   color: #E2E8F0;
-  font-size: 11px;
+  font-size: 12px;
   padding: 3px 8px;
   border-radius: 4px;
 }
@@ -442,7 +465,7 @@ body {
 }
 
 .product-cat-tag {
-  font-size: 10px;
+  font-size: 11px;
   text-transform: uppercase;
   color: var(--text-sub);
   font-weight: 700;
@@ -493,7 +516,7 @@ body {
 }
 
 .product-desc {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-sub);
   line-height: 1.4;
   margin-bottom: 10px;
@@ -582,7 +605,7 @@ body {
   padding: 5px 14px;
   font-size: 12px;
   font-weight: 600;
-  color: #64748B;
+  color: #475569;
   cursor: pointer;
   border-radius: 6px;
   transition: all 0.15s ease;
@@ -645,7 +668,7 @@ body {
 }
 
 .cart-item-price-unit {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-sub);
   margin-top: 2px;
 }
@@ -653,6 +676,7 @@ body {
 .cart-item-flavor {
   margin-top: 2px;
   line-height: 1.2;
+  font-size: 12px;
 }
 
 .cart-item-actions {
@@ -801,7 +825,7 @@ body {
 
 .discount-select {
   padding: 4px 8px;
-  font-size: 11px;
+  font-size: 12px;
   border: 1px solid var(--border-medium);
   border-radius: 4px;
   background: #FFFFFF;
@@ -947,22 +971,23 @@ body {
   background-color: var(--bg-surface);
   border: 1px solid var(--border-medium);
   border-radius: 6px;
-  padding: 14px;
+  padding: 16px 14px 14px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  overflow: hidden;
 }
 
 .kds-card.status-pending {
-  border-top: 4px solid var(--status-amber);
+  border-color: var(--status-amber);
 }
 
 .kds-card.status-preparing {
-  border-top: 4px solid var(--status-blue);
+  border-color: var(--status-blue);
 }
 
 .kds-card.status-ready {
-  border-top: 4px solid var(--status-green);
+  border-color: var(--status-green);
 }
 
 .kds-card-header {
@@ -984,7 +1009,7 @@ body {
 }
 
 .kds-status-badge {
-  font-size: 11px;
+  font-size: 12px;
   padding: 2px 6px;
   border-radius: 4px;
   font-weight: 700;
@@ -1018,7 +1043,7 @@ body {
 .kds-time-bar {
   display: flex;
   justify-content: space-between;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-sub);
   padding-bottom: 8px;
   border-bottom: 1px solid var(--border-light);
@@ -1162,7 +1187,7 @@ body {
 }
 
 .status-badge {
-  font-size: 11px;
+  font-size: 12px;
   padding: 2px 8px;
   border-radius: 12px;
   font-weight: 600;
@@ -1245,7 +1270,7 @@ body {
 }
 
 .kpi-title {
-  font-size: 11px;
+  font-size: 12px;
   text-transform: uppercase;
   color: var(--text-sub);
   font-weight: 700;
@@ -1260,7 +1285,7 @@ body {
 }
 
 .kpi-desc {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-sub);
 }
 
@@ -1330,7 +1355,7 @@ body {
 }
 
 .top-item-sub {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-sub);
 }
 
@@ -1497,7 +1522,7 @@ body {
 }
 
 .due-title {
-  font-size: 10px;
+  font-size: 12px;
   text-transform: uppercase;
   color: var(--text-sub);
   font-weight: 700;
@@ -1521,7 +1546,7 @@ body {
   border: 1px solid var(--border-medium);
   padding: 6px;
   border-radius: 4px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   cursor: pointer;
 }
@@ -1557,7 +1582,7 @@ body {
 
 .field-label {
   display: block;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   margin-bottom: 3px;
 }
@@ -1657,13 +1682,13 @@ body {
    ========================================================================== */
 .pos-sidebar {
   width: 240px;
-  background-color: #0B2545;
+  background-color: #111827;
   color: #FFFFFF;
   display: flex;
   flex-direction: column;
   height: 100vh;
   flex-shrink: 0;
-  border-right: 1px solid #1E3A60;
+  border-right: 1px solid #1F2937;
   z-index: 100;
   user-select: none;
 }
@@ -1704,17 +1729,17 @@ body {
 }
 
 .sidebar-store-subtitle {
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
-  color: #94A3B8;
+  color: #CBD5E1;
   letter-spacing: 0.8px;
   margin-top: 2px;
 }
 
 .sidebar-menu-header {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
-  color: #64748B;
+  color: #94A3B8;
   padding: 18px 16px 8px;
   letter-spacing: 0.8px;
   text-transform: uppercase;
@@ -1752,7 +1777,7 @@ body {
 }
 
 .sidebar-nav-item.active {
-  background-color: #1E40AF;
+  background-color: var(--color-primary);
   color: #FFFFFF;
   font-weight: 700;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
@@ -1772,7 +1797,7 @@ body {
 .sidebar-footer {
   padding: 14px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
-  background-color: #081B33;
+  background-color: #0B0F19;
 }
 
 .sidebar-user-card {
@@ -1803,7 +1828,7 @@ body {
 .user-switch-chevron {
   width: 14px;
   height: 14px;
-  color: #64748B;
+  color: #94A3B8;
   margin-left: auto;
   flex-shrink: 0;
   transition: transform 0.2s ease, color 0.2s ease;
@@ -1818,13 +1843,13 @@ body {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background-color: #1E3A60;
+  background-color: #1F2937;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
-  color: #93C5FD;
+  color: #F8FAFC;
 }
 
 .user-lane-title {
@@ -1834,31 +1859,53 @@ body {
 }
 
 .user-role-badge {
-  display: inline-block;
-  font-size: 9px;
-  font-weight: 800;
-  background-color: #10B981;
-  color: #FFFFFF;
-  padding: 1px 6px;
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  width: fit-content;
+  max-width: fit-content;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
   border-radius: 4px;
   text-transform: uppercase;
   margin-top: 2px;
-  letter-spacing: 0.5px;
+  line-height: 1.25;
+  letter-spacing: 0.03em;
+  border: 1px solid transparent;
 }
 
 .user-role-badge.badge-role-admin {
-  background-color: #F59E0B;
-  color: #1E293B;
+  background-color: #DBEAFE;
+  color: #1E40AF;
+  border-color: #BFDBFE;
 }
 
 .user-role-badge.badge-role-cashier {
-  background-color: #10B981;
-  color: #FFFFFF;
+  background-color: #DCFCE7;
+  color: #166534;
+  border-color: #BBF7D0;
 }
 
 .user-role-badge.badge-role-kitchen {
-  background-color: #8B5CF6;
-  color: #FFFFFF;
+  background-color: #FEF3C7;
+  color: #92400E;
+  border-color: #FDE68A;
+}
+
+/* Sidebar Role Badge compact sizing override */
+.sidebar-user-card .user-role-badge,
+.sidebar-user-card .badge-role-admin,
+.sidebar-user-card .badge-role-cashier,
+.sidebar-user-card .badge-role-kitchen {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  padding: 2px 6px !important;
+  line-height: 1.25 !important;
+  width: fit-content !important;
+  max-width: fit-content !important;
+  align-self: flex-start !important;
+  letter-spacing: 0.03em !important;
 }
 
 .btn-sidebar-lock {
@@ -1867,8 +1914,8 @@ body {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 6px;
-  color: #94A3B8;
-  font-size: 11px;
+  color: #CBD5E1;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   display: flex;
@@ -2004,9 +2051,9 @@ body {
 }
 
 .dash-section-header {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
-  color: #64748B;
+  color: #475569;
   letter-spacing: 0.8px;
   text-transform: uppercase;
 }
@@ -2027,18 +2074,21 @@ body {
 }
 
 .dash-kpi-card.card-sales {
-  background-color: #0B2545;
-  color: #FFFFFF;
+  background-color: #FFFFFF;
+  color: var(--text-main);
+  border: 1px solid #E2E8F0;
 }
 
 .dash-kpi-card.card-items {
-  background-color: #1E3A8A;
-  color: #FFFFFF;
+  background-color: #FFFFFF;
+  color: var(--text-main);
+  border: 1px solid #E2E8F0;
 }
 
 .dash-kpi-card.card-trans {
-  background-color: #1E293B;
-  color: #FFFFFF;
+  background-color: #FFFFFF;
+  color: var(--text-main);
+  border: 1px solid #E2E8F0;
 }
 
 .dash-kpi-card.card-alert {
@@ -2053,16 +2103,17 @@ body {
 }
 
 .dash-kpi-card .kpi-label {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.5px;
   text-transform: uppercase;
   margin-bottom: 4px;
-  opacity: 0.9;
+  opacity: 1;
+  color: var(--text-sub);
 }
 
 .dash-kpi-card.card-alert .kpi-label {
-  color: #B45309;
+  color: #92400E;
 }
 
 .dash-kpi-card .kpi-value {
@@ -2073,16 +2124,17 @@ body {
 }
 
 .dash-kpi-card.card-alert .kpi-value {
-  color: #B45309;
+  color: #92400E;
 }
 
 .dash-kpi-card .kpi-caption {
-  font-size: 11px;
-  opacity: 0.8;
+  font-size: 12px;
+  opacity: 1;
+  color: var(--text-sub);
 }
 
 .dash-kpi-card.card-alert .kpi-caption {
-  color: #B45309;
+  color: #92400E;
 }
 
 .kpi-badge-icon {
@@ -2098,23 +2150,23 @@ body {
 }
 
 .kpi-badge-icon.badge-currency {
-  background-color: #F59E0B;
-  color: #1E293B;
+  background-color: #FEE2E2;
+  color: #B91C1C;
 }
 
 .kpi-badge-icon.badge-box {
-  background-color: #F59E0B;
+  background-color: #F1F5F9;
   color: #1E293B;
 }
 
 .kpi-badge-icon.badge-tx {
-  background-color: #334155;
-  color: #F1F5F9;
+  background-color: #F1F5F9;
+  color: #334155;
 }
 
 .kpi-badge-icon.badge-warning {
-  background-color: #F59E0B;
-  color: #FFFFFF;
+  background-color: #FEF3C7;
+  color: #92400E;
   font-size: 18px;
 }
 
@@ -2159,7 +2211,7 @@ body {
 .legend-square {
   width: 12px;
   height: 12px;
-  background-color: #F59E0B;
+  background-color: var(--color-primary);
   border-radius: 2px;
 }
 
@@ -2191,7 +2243,7 @@ body {
 }
 
 .trend-col-amount {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   color: #475569;
   margin-bottom: 6px;
@@ -2207,26 +2259,26 @@ body {
 
 .trend-col-bar {
   width: 100%;
-  background-color: #F59E0B;
+  background-color: #334155;
   border-radius: 4px 4px 0 0;
   transition: height 0.3s ease;
 }
 
 .trend-col-bar.bar-peak {
-  background-color: #D97706;
-  box-shadow: 0 0 0 2px #FDE68A;
+  background-color: var(--color-primary);
+  box-shadow: 0 0 0 2px #FECDD3;
 }
 
 .trend-col-label {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   color: #1E293B;
   margin-top: 6px;
 }
 
 .trend-col-sub {
-  font-size: 10px;
-  color: #94A3B8;
+  font-size: 11px;
+  color: #475569;
 }
 
 .trend-summary-callout {
@@ -2359,7 +2411,7 @@ body {
 
 .kds-flavor-tag {
   display: inline-block;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
   color: #B45309;
   background-color: #FEF3C7;
@@ -2394,9 +2446,9 @@ body {
 }
 
 .drawer-stat-label {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
-  color: #64748B;
+  color: #475569;
   text-transform: uppercase;
 }
 
@@ -2439,7 +2491,7 @@ body {
    MILESTONE 1: HARDWARE & SETTINGS DIAGNOSTICS MODAL
    ========================================================================== */
 .diag-section-header {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.8px;
@@ -2489,7 +2541,7 @@ body {
 }
 
 .diag-status-badge {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   padding: 2px 8px;
   border-radius: 4px;
@@ -2732,8 +2784,15 @@ body {
   font-size: 11px;
 }
 
+/* Enforce perfect horizontal centering for role badge within staff card */
+.staff-user-card .user-role-badge {
+  align-self: center !important;
+  margin: 4px auto 0 auto !important;
+  text-align: center;
+}
+
 .staff-user-name {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--text-main, #0F172A);
   white-space: nowrap;
@@ -2775,6 +2834,23 @@ body {
 
 .modal-close-btn:active {
   background-color: #E2E8F0;
+}
+
+/* High-contrast state for modal close button on dark headers */
+.modal-header .modal-close-btn {
+  color: #94A3B8;
+}
+
+.modal-header .modal-close-btn:hover {
+  background-color: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #FFFFFF;
+}
+
+/* KDS ticket elapsed badge formatting */
+.kds-elapsed {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 /* --------------------------------------------------------------------------
@@ -2820,7 +2896,7 @@ body {
   gap: 4px;
   padding: 3px 8px;
   border-radius: 4px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   line-height: 1.2;
   background-color: #FEF3C7;
@@ -2984,7 +3060,7 @@ body {
   padding: 7px 12px;
   border: none;
   background: transparent;
-  color: #64748B;
+  color: #475569;
   font-size: 12px;
   font-weight: 600;
   border-radius: 4px;
@@ -3008,9 +3084,9 @@ body {
 }
 
 .badge-supply {
-  background-color: #F5F3FF;
-  color: #6D28D9;
-  border: 1px solid #DDD6FE;
+  background-color: #F1F5F9;
+  color: #334155;
+  border: 1px solid #CBD5E1;
 }
 
 /* Recipe BOM Multi-Row Builder */
@@ -3127,7 +3203,7 @@ body {
 }
 
 .inv-cat-dropdown-group label {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -3229,7 +3305,7 @@ body {
 }
 
 .admin-stat-label {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.6px;
@@ -3274,7 +3350,7 @@ body {
   border: 1px solid #BFDBFE;
   color: #1E40AF;
   font-weight: 700;
-  font-size: 11px;
+  font-size: 12px;
   padding: 2px 8px;
   border-radius: 4px;
 }
@@ -3284,7 +3360,7 @@ body {
   border: 1px solid #BBF7D0;
   color: #166534;
   font-weight: 700;
-  font-size: 11px;
+  font-size: 12px;
   padding: 2px 8px;
   border-radius: 4px;
 }
@@ -3294,7 +3370,7 @@ body {
   border: 1px solid #FDE68A;
   color: #92400E;
   font-weight: 700;
-  font-size: 11px;
+  font-size: 12px;
   padding: 2px 8px;
   border-radius: 4px;
 }
@@ -3319,7 +3395,7 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  color: #16A34A;
+  color: var(--status-green);
   font-weight: 700;
   font-size: 12px;
 }
@@ -3342,5 +3418,493 @@ body {
   font-size: 12px;
 }
 
+/* ==========================================================================
+   IMPECCABLE RENOVATION ADDITIONS (v1.2.0)
+   ========================================================================== */
 
+/* Sidebar items the signed-in role cannot open stay visible but muted */
+.sidebar-nav-item.nav-restricted {
+  opacity: 0.55;
+}
 
+/* KDS ticket age escalation (elapsed time pills) */
+.kds-elapsed.sla-warning {
+  background-color: #FEF3C7;
+  color: #92400E;
+  border: 1px solid #FDE68A;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+}
+
+.kds-elapsed.sla-critical {
+  background-color: #FEE2E2;
+  color: #991B1B;
+  border: 1px solid #FCA5A5;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 800;
+}
+
+/* Exact Amount is the primary one-tap tender accelerator */
+.btn-quick-cash[data-val="exact"] {
+  background-color: #FEF2F2;
+  border-color: #FECACA;
+  color: var(--color-primary);
+}
+
+/* Tender field label row with inline DEL key */
+.tender-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.tender-label-row .field-label {
+  margin-bottom: 0;
+}
+
+.btn-keypad.btn-tender-del {
+  width: auto;
+  min-height: 28px;
+  height: 28px;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 6px;
+  color: var(--text-secondary);
+}
+
+.btn-keypad.btn-tender-del:focus-visible,
+.btn-quick-cash:focus-visible,
+.sidebar-nav-item:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Mobile cart discount row */
+.cart-summary-row.discount-row {
+  align-items: center;
+}
+
+/* ==========================================================================
+   MODAL FORM SYSTEM & SELECTOR PARITY ADDITIONS (v1.2.1)
+   Every class referenced by index.html and renderer/js/*.js is defined here
+   ========================================================================== */
+
+/* Dark modal header subtitle */
+.modal-subtitle {
+  margin: 2px 0 0;
+  font-size: 12px;
+  font-weight: 400;
+  color: #9CA3AF;
+  line-height: 1.4;
+}
+
+/* Form primitives: stacked label, control, hint */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.form-row-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.form-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.form-input {
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--border-medium);
+  border-radius: 6px;
+  background-color: var(--bg-surface);
+  color: var(--text-main);
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-input::placeholder {
+  color: #6B7280;
+}
+
+.form-input:hover {
+  border-color: var(--border-dark);
+}
+
+.form-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.14);
+}
+
+/* Custom chevron replaces the native select arrow */
+select.form-input {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 34px;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+
+.form-hint {
+  font-size: 12px;
+  color: var(--text-sub);
+  line-height: 1.4;
+}
+
+/* Stock adjustment: target banner */
+.adjust-target-banner,
+.void-order-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  background-color: var(--bg-subtle);
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+}
+
+.adjust-target-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.adjust-sku-badge {
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-sub);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-medium);
+  border-radius: 4px;
+}
+
+.adjust-target-title {
+  font-size: 15px;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Stock equation card */
+.stock-adjust-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin-bottom: 16px;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-medium);
+  border-radius: 8px;
+}
+
+.stock-adjust-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+}
+
+.stock-adjust-metric + .stock-adjust-metric {
+  border-left: 1px solid var(--border-light);
+}
+
+.stock-metric-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-sub);
+}
+
+.stock-metric-val {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-main);
+  font-variant-numeric: tabular-nums;
+}
+
+.stock-metric-val.is-positive { color: var(--status-green); }
+.stock-metric-val.is-negative { color: var(--status-red); }
+
+/* Quick-preset chips */
+.adjust-preset-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+}
+
+.btn-adjust-preset {
+  height: 32px;
+  border: 1px solid var(--border-medium);
+  border-radius: 6px;
+  background-color: var(--bg-surface);
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+
+.btn-adjust-preset:hover { background-color: var(--bg-subtle); }
+.btn-adjust-preset:active { transform: scale(0.95); }
+.btn-adjust-preset:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+
+.btn-adjust-preset.is-positive:hover {
+  background-color: var(--status-green-bg);
+  border-color: var(--status-green-border);
+  color: var(--status-green);
+}
+
+.btn-adjust-preset.is-negative:hover {
+  background-color: var(--status-red-bg);
+  border-color: var(--status-red-border);
+  color: var(--status-red);
+}
+
+/* Void order summary */
+.void-order-id-text {
+  display: block;
+  margin-top: 2px;
+  font-size: 16px;
+  color: var(--text-main);
+}
+
+.void-order-amount-text {
+  display: block;
+  margin-top: 2px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--status-red);
+}
+
+/* Compact table action buttons (admin accounts and categories) */
+.btn-small {
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 6px;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-medium);
+  color: var(--text-secondary);
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.btn-small:hover {
+  background-color: var(--bg-subtle);
+  border-color: var(--border-dark);
+}
+
+.btn-edit-user:hover {
+  color: var(--text-main);
+}
+
+/* Destructive actions stay muted until hover */
+.btn-delete-user,
+.btn-del-category {
+  color: #94A3B8;
+}
+
+.btn-delete-user:hover,
+.btn-del-category:hover {
+  background-color: #FEE2E2;
+  border-color: #FECDD3;
+  color: #DC2626;
+}
+
+/* Category and info chips */
+.category-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background-color: #F1F5F9;
+  border: 1px solid #E2E8F0;
+  border-radius: 4px;
+}
+
+/* Empty states */
+.empty-state-card,
+.cart-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 32px 20px;
+  text-align: center;
+  color: var(--text-sub);
+}
+
+.empty-state-card {
+  border: 1px dashed var(--border-medium);
+  border-radius: 8px;
+  background-color: var(--bg-subtle);
+}
+
+.empty-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.empty-desc,
+.empty-products-msg {
+  font-size: 12px;
+  color: var(--text-sub);
+  line-height: 1.5;
+}
+
+/* KDS ticket footer */
+.kds-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding-top: 10px;
+  margin-top: 10px;
+  border-top: 1px solid var(--border-light);
+}
+
+/* Recipe BOM editor */
+.recipe-bom-section {
+  margin-top: 12px;
+  padding: 12px;
+  background-color: var(--bg-subtle);
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+}
+
+.recipe-ing-select,
+.recipe-ing-qty {
+  height: 36px;
+  border: 1px solid var(--border-medium);
+  border-radius: 6px;
+  background-color: var(--bg-surface);
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+.recipe-ing-qty {
+  width: 80px;
+  font-variant-numeric: tabular-nums;
+}
+
+.recipe-ing-select:focus,
+.recipe-ing-qty:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.14);
+  outline: none;
+}
+
+.recipe-ing-unit {
+  min-width: 36px;
+  text-align: left;
+}
+
+/* Layout containers and cart value spans */
+.admin-tab-pane { width: 100%; }
+.dash-table-container { width: 100%; overflow-x: auto; }
+.inventory-toolbar-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.user-details { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; }
+.legend-label { font-size: 12px; color: var(--text-sub); }
+.diag-hint { font-size: 12px; color: var(--text-sub); line-height: 1.5; }
+
+.cart-subtotal-val,
+.cart-discount-val,
+.cart-total-items-val {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+/* Vertical padding utilities used by table empty-state rows */
+.py-3 { padding-top: 12px; padding-bottom: 12px; }
+.py-4 { padding-top: 16px; padding-bottom: 16px; }
+
+/* Set Physical Stock Action Trigger */
+.btn-restock-set {
+  background-color: #F8FAFC;
+  border: 1px solid #CBD5E1;
+  color: #334155;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-restock-set:hover {
+  background-color: #0F172A;
+  border-color: #0F172A;
+  color: #FFFFFF;
+}
+
+/* Minimalist Segmented Control: Adjust (+/-) vs Set (=) */
+.adjust-mode-segmented {
+  display: flex;
+  background-color: #F1F5F9;
+  border: 1px solid #E2E8F0;
+  padding: 3px;
+  border-radius: 8px;
+  gap: 4px;
+  margin-bottom: 14px;
+}
+
+.adjust-mode-btn {
+  flex: 1;
+  padding: 6px 10px;
+  border: none;
+  background: transparent;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: center;
+}
+
+.adjust-mode-btn:hover {
+  color: var(--text-main, #0F172A);
+}
+
+.adjust-mode-btn.active {
+  background-color: #FFFFFF;
+  color: var(--text-main, #0F172A);
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.btn-adjust-preset.is-target {
+  background-color: #F8FAFC;
+  border-color: #E2E8F0;
+  color: #334155;
+}
+
+.btn-adjust-preset.is-target:hover {
+  background-color: #EFF6FF;
+  border-color: #BFDBFE;
+  color: #1D4ED8;
+}

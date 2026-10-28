@@ -281,6 +281,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Update Sidebar Nav Items
     document.querySelectorAll('.sidebar-nav-item').forEach(item => {
       item.classList.toggle('active', item.dataset.view === viewName);
+      // Mute items this role cannot open so the restriction is visible before clicking.
+      const isRestricted = (item.dataset.view === 'admin' && userRole !== 'Admin')
+        || (item.dataset.view === 'sales' && userRole === 'Kitchen');
+      item.classList.toggle('nav-restricted', isRestricted);
+    });
+
+    // Context-aware top bar: hide shortcuts that make no sense on the current screen or role.
+    const btnGoPos = document.getElementById('top-btn-go-pos');
+    if (btnGoPos) btnGoPos.style.display = (viewName === 'pos' || userRole === 'Kitchen') ? 'none' : '';
+    ['top-btn-export-csv', 'top-btn-print-z'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = (userRole === 'Kitchen') ? 'none' : '';
     });
 
     // Update Desktop Nav Tabs (if present)
@@ -318,7 +330,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   const btnRefresh = document.getElementById('top-btn-refresh');
   if (btnRefresh) {
     btnRefresh.addEventListener('click', () => {
-      window.location.reload();
+      // Soft re-sync: recompute portions and redraw views WITHOUT reloading the page,
+      // so an order currently in the cart is never lost.
+      if (window.appStore && typeof window.appStore.refreshProductPortions === 'function') {
+        window.appStore.refreshProductPortions();
+      }
+      switchView(window.appStore.activeView || 'dashboard');
+      if (window.PosController) {
+        window.PosController.renderProducts();
+        window.PosController.renderCart();
+      }
+      window.appStore.showToast('Store catalog and inventory synchronized.', 'info');
     });
   }
 
@@ -454,6 +476,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   if (btnOpenDiag) btnOpenDiag.addEventListener('click', openDiagnosticsModal);
   if (btnCloseDiag) btnCloseDiag.addEventListener('click', closeDiagnosticsModal);
+  const btnXCloseDiag = document.getElementById('btn-x-close-diag-modal');
+  if (btnXCloseDiag) btnXCloseDiag.addEventListener('click', closeDiagnosticsModal);
   if (btnCopyDiagUrl) {
     btnCopyDiagUrl.addEventListener('click', () => {
       const elUrl = document.getElementById('diag-server-url');

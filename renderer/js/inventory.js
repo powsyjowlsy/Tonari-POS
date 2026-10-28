@@ -8,6 +8,7 @@ const InventoryController = {
   selectedProduct: null,
   currentSubTab: 'products', // 'products' | 'ingredients' | 'waste'
   currentWasteType: 'product', // 'product' | 'ingredient'
+  adjustMode: 'delta', // 'delta' (+/- relative) | 'set' (= exact count)
 
   init() {
     // DOM Element References
@@ -52,6 +53,33 @@ const InventoryController = {
     if (btnCancelAdjust) btnCancelAdjust.addEventListener('click', () => this.closeAdjustModal());
     const btnConfirmAdjust = document.getElementById('btn-confirm-restock-adjust');
     if (btnConfirmAdjust) btnConfirmAdjust.addEventListener('click', () => this.submitAdjustModal());
+    // Live projected-stock preview while typing a delta or target count
+    const adjustDeltaInput = document.getElementById('adjust-stock-delta');
+    if (adjustDeltaInput) {
+      adjustDeltaInput.addEventListener('input', () => this.updateAdjustPreview());
+    }
+    // Segmented mode toggle: Adjust by Delta (+/-) vs Set Exact Stock (=)
+    const btnModeDelta = document.getElementById('btn-adjust-mode-delta');
+    const btnModeSet = document.getElementById('btn-adjust-mode-set');
+    if (btnModeDelta) btnModeDelta.addEventListener('click', () => this.setAdjustMode('delta'));
+    if (btnModeSet) btnModeSet.addEventListener('click', () => this.setAdjustMode('set'));
+    // Quick-preset chips add their step in 'delta' mode or set exact value in 'set' mode
+    const adjustPresetContainer = document.getElementById('adjust-preset-chips');
+    if (adjustPresetContainer) {
+      adjustPresetContainer.addEventListener('click', (e) => {
+        const btn = e.target.closest('.btn-adjust-preset');
+        if (!btn || !adjustDeltaInput) return;
+        if (this.adjustMode === 'set') {
+          const targetVal = parseFloat(btn.dataset.target);
+          if (!isNaN(targetVal)) adjustDeltaInput.value = String(targetVal);
+        } else {
+          const step = parseFloat(btn.dataset.delta) || 0;
+          const current = parseFloat(adjustDeltaInput.value) || 0;
+          adjustDeltaInput.value = String(current + step);
+        }
+        this.updateAdjustPreview();
+      });
+    }
     // 3-Tab Segment Switching
     if (this.btnTabProducts) {
       this.btnTabProducts.addEventListener('click', () => this.switchSubTab('products'));
@@ -831,6 +859,7 @@ const InventoryController = {
               <button type="button" class="btn-restock-minus" data-id="${ing.id}" data-delta="-${step2}">-${step2}</button>
               <button type="button" class="btn-restock-plus" data-id="${ing.id}" data-delta="${step2}">+${step2}</button>
               <button type="button" class="btn-restock-adjust" data-id="${ing.id}" data-name="${ing.name}" data-unit="${unit}">Adjust</button>
+              <button type="button" class="btn-restock-set" data-id="${ing.id}" data-name="${ing.name}" data-unit="${unit}">Set</button>
             </div>
           </td>
         </tr>
@@ -853,31 +882,127 @@ const InventoryController = {
       });
     });
 
-    // Attach custom physical stock adjust handler (via custom modal, not native prompt)
+    // Attach custom physical stock adjust (+/-) and exact set (=) handlers
     this.ingredientsTableBody.querySelectorAll('.btn-restock-adjust').forEach(btn => {
       btn.addEventListener('click', () => {
-        const ingId = btn.dataset.id;
-        const name = btn.dataset.name;
-        const unit = btn.dataset.unit;
-        this.openAdjustModal(ingId, name, unit);
+        this.openAdjustModal(btn.dataset.id, btn.dataset.name, btn.dataset.unit, 'delta');
+      });
+    });
+    this.ingredientsTableBody.querySelectorAll('.btn-restock-set').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.openAdjustModal(btn.dataset.id, btn.dataset.name, btn.dataset.unit, 'set');
       });
     });
   },
 
-  openAdjustModal(ingId, name, unit) {
+  openAdjustModal(ingId, name, unit, mode = 'delta') {
     const modal = document.getElementById('restock-adjust-modal');
     if (!modal) return;
+    // Cache baseline stock and unit for the live preview
+    const ing = (window.appStore.ingredients || []).find(i => i.id === ingId);
+    this.adjustCurrentStockVal = ing ? (Number(ing.stock) || 0) : 0;
+    this.adjustCurrentUnitVal = unit || (ing && ing.unit) || 'units';
+
     const idInput = document.getElementById('adjust-ingredient-id');
+    const skuEl = document.getElementById('adjust-ingredient-sku');
     const nameEl = document.getElementById('adjust-ingredient-name');
     const unitEl = document.getElementById('adjust-ingredient-unit');
-    const deltaInput = document.getElementById('adjust-stock-delta');
+    const unitBadgeEl = document.getElementById('adjust-ingredient-unit-badge');
 
     if (idInput) idInput.value = ingId;
+    if (skuEl) skuEl.textContent = ingId;
     if (nameEl) nameEl.textContent = name;
-    if (unitEl) unitEl.textContent = unit;
-    if (deltaInput) deltaInput.value = '';
+    if (unitEl) unitEl.textContent = this.adjustCurrentUnitVal;
+    if (unitBadgeEl) unitBadgeEl.textContent = `Unit: ${this.adjustCurrentUnitVal}`;
 
+    this.setAdjustMode(mode);
     modal.classList.add('modal-visible');
+  },
+
+  setAdjustMode(mode) {
+    this.adjustMode = mode === 'set' ? 'set' : 'delta';
+    const isSet = this.adjustMode === 'set';
+
+    const btnDelta = document.getElementById('btn-adjust-mode-delta');
+    const btnSet = document.getElementById('btn-adjust-mode-set');
+    const titleEl = document.getElementById('adjust-modal-title');
+    const subtitleEl = document.getElementById('adjust-modal-subtitle');
+    const midLabelEl = document.getElementById('adjust-middle-metric-label');
+    const finalLabelEl = document.getElementById('adjust-final-metric-label');
+    const presetGroupLabel = document.getElementById('adjust-preset-group-label');
+    const inputLabelText = document.getElementById('adjust-input-label-text');
+    const inputHint = document.getElementById('adjust-input-hint');
+    const confirmBtn = document.getElementById('btn-confirm-restock-adjust');
+    const deltaInput = document.getElementById('adjust-stock-delta');
+    const presetContainer = document.getElementById('adjust-preset-chips');
+
+    if (btnDelta) btnDelta.classList.toggle('active', !isSet);
+    if (btnSet) btnSet.classList.toggle('active', isSet);
+    if (titleEl) titleEl.textContent = isSet ? 'Set Physical Stock Count' : 'Adjust Physical Stock';
+    if (subtitleEl) subtitleEl.textContent = isSet ? 'Override current inventory with an exact physical audit count' : 'Record a delivery or reconcile a physical count';
+    if (midLabelEl) midLabelEl.textContent = isSet ? 'Net Variance' : 'Adjustment';
+    if (finalLabelEl) finalLabelEl.textContent = isSet ? 'New Stock' : 'Projected Stock';
+    if (presetGroupLabel) presetGroupLabel.textContent = isSet ? 'Quick Target Stock Presets' : 'Quick Adjustment Presets';
+    if (inputLabelText) inputLabelText.textContent = isSet ? 'Exact Physical Stock Count' : 'Stock Adjustment Delta';
+    if (inputHint) inputHint.textContent = isSet ? 'Sets the ingredient stock directly to this exact non-negative value' : 'Positive for new deliveries, negative for prep trim or corrections';
+    if (confirmBtn) confirmBtn.textContent = isSet ? 'Set Stock Count' : 'Apply Adjustment';
+    if (deltaInput) {
+      deltaInput.value = isSet ? String(this.adjustCurrentStockVal || 0) : '';
+      deltaInput.placeholder = isSet ? 'e.g. 2500' : 'e.g. +500 or -250';
+      if (isSet) deltaInput.setAttribute('min', '0');
+      else deltaInput.removeAttribute('min');
+    }
+
+    if (presetContainer) {
+      const isBulk = this.adjustCurrentUnitVal === 'g' || this.adjustCurrentUnitVal === 'ml';
+      if (isSet) {
+        const targets = isBulk ? [0, 250, 500, 1000, 2500, 5000] : [0, 10, 25, 50, 100, 250];
+        presetContainer.innerHTML = targets.map(t => {
+          return `<button type="button" class="btn-adjust-preset is-target tabular-nums" data-target="${t}">=${t}</button>`;
+        }).join('');
+      } else {
+        const steps = isBulk ? [-1000, -500, -100, 100, 500, 1000] : [-50, -25, -10, 10, 25, 50];
+        presetContainer.innerHTML = steps.map(s => {
+          const label = s > 0 ? `+${s}` : `${s}`;
+          const cls = s > 0 ? 'is-positive' : 'is-negative';
+          return `<button type="button" class="btn-adjust-preset ${cls} tabular-nums" data-delta="${s}">${label}</button>`;
+        }).join('');
+      }
+    }
+
+    this.updateAdjustPreview();
+  },
+
+  // Recomputes the Current / Adjustment / Projected stock equation card
+  updateAdjustPreview() {
+    const currentEl = document.getElementById('adjust-current-stock');
+    const deltaEl = document.getElementById('adjust-delta-preview');
+    const projEl = document.getElementById('adjust-projected-stock');
+    const deltaInput = document.getElementById('adjust-stock-delta');
+
+    const base = Number(this.adjustCurrentStockVal) || 0;
+    const unit = this.adjustCurrentUnitVal || 'units';
+    const rawVal = deltaInput ? parseFloat(deltaInput.value) : NaN;
+
+    let delta = 0;
+    let projected = base;
+    if (this.adjustMode === 'set') {
+      projected = isNaN(rawVal) ? base : Math.max(0, rawVal);
+      delta = projected - base;
+    } else {
+      delta = isNaN(rawVal) ? 0 : rawVal;
+      projected = Math.max(0, base + delta);
+    }
+
+    if (currentEl) currentEl.textContent = `${base.toLocaleString()} ${unit}`;
+    if (deltaEl) {
+      deltaEl.textContent = `${delta > 0 ? '+' : ''}${delta.toLocaleString()} ${unit}`;
+      deltaEl.className = 'stock-metric-val tabular-nums' + (delta > 0 ? ' is-positive' : (delta < 0 ? ' is-negative' : ''));
+    }
+    if (projEl) {
+      projEl.textContent = `${projected.toLocaleString()} ${unit}`;
+      projEl.className = 'stock-metric-val tabular-nums' + (projected === 0 ? ' is-negative' : (delta > 0 ? ' is-positive' : ''));
+    }
   },
 
   closeAdjustModal() {
@@ -891,16 +1016,32 @@ const InventoryController = {
     if (!idInput || !deltaInput) return;
 
     const ingId = idInput.value;
-    const delta = parseFloat(deltaInput.value);
+    const val = parseFloat(deltaInput.value);
 
-    if (isNaN(delta) || delta === 0) {
+    if (this.adjustMode === 'set') {
+      if (isNaN(val) || val < 0) {
+        window.appStore.showToast('Please enter a valid non-negative stock count (0 or higher).', 'warning');
+        return;
+      }
+      const success = window.appStore.setIngredientStock(ingId, val);
+      if (success) {
+        window.appStore.showToast(`Physical stock set to ${val.toLocaleString()} ${this.adjustCurrentUnitVal || 'units'}.`, 'success');
+        this.closeAdjustModal();
+        this.render();
+      } else {
+        window.appStore.showToast('Failed to set physical stock.', 'error');
+      }
+      return;
+    }
+
+    if (isNaN(val) || val === 0) {
       window.appStore.showToast('Please enter a non-zero adjustment number.', 'warning');
       return;
     }
 
-    const success = window.appStore.adjustIngredientStock(ingId, delta);
+    const success = window.appStore.adjustIngredientStock(ingId, val);
     if (success) {
-      window.appStore.showToast(`Stock adjusted by ${delta > 0 ? '+' : ''}${delta}.`, 'success');
+      window.appStore.showToast(`Stock adjusted by ${val > 0 ? '+' : ''}${val}.`, 'success');
       this.closeAdjustModal();
       this.render();
     } else {

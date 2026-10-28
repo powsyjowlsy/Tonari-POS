@@ -42,14 +42,34 @@ const KitchenController = {
   },
 
   getElapsedString(timestamp) {
-    const diffMs = Date.now() - new Date(timestamp).getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffSecs = Math.floor((diffMs % 60000) / 1000);
+    const diffMs = Math.max(0, Date.now() - new Date(timestamp).getTime());
+    const totalSecs = Math.floor(diffMs / 1000);
+    const days = Math.floor(totalSecs / 86400);
+    const hours = Math.floor((totalSecs % 86400) / 3600);
+    const mins = Math.floor((totalSecs % 3600) / 60);
+    const secs = totalSecs % 60;
 
-    if (diffMins === 0) {
-      return `${diffSecs}s ago`;
+    if (days > 0) {
+      return `${days}d ${hours}h ${mins}m ago`;
     }
-    return `${diffMins}m ${diffSecs}s ago`;
+    if (hours > 0) {
+      return `${hours}h ${mins}m ${secs}s ago`;
+    }
+    if (mins > 0) {
+      return `${mins}m ${secs}s ago`;
+    }
+    return `${secs}s ago`;
+  },
+
+  // Returns a CSS urgency class so slow tickets stand out from across the kitchen.
+  // Under 5 minutes: no highlight. 5 to 9 minutes: warning. 10 minutes or more: critical.
+  getSlaUrgencyClass(timestamp, status) {
+    // Finished tickets no longer age, so they never escalate.
+    if (status === 'Completed' || status === 'Voided') return '';
+    const diffMins = Math.floor((Date.now() - new Date(timestamp).getTime()) / 60000);
+    if (diffMins >= 10) return 'sla-critical';
+    if (diffMins >= 5) return 'sla-warning';
+    return '';
   },
 
   render() {
@@ -82,6 +102,7 @@ const KitchenController = {
     let html = '';
     orders.forEach(order => {
       const elapsed = this.getElapsedString(order.timestamp);
+      const slaClass = this.getSlaUrgencyClass(order.timestamp, order.status);
       
       let statusClass = 'badge-pending';
       let nextActionBtn = '';
@@ -123,7 +144,7 @@ const KitchenController = {
           
           <div class="kds-time-bar">
             <span>Placed: ${order.time}</span>
-            <span class="kds-elapsed tabular-numbers">${elapsed}</span>
+            <span class="kds-elapsed tabular-numbers ${slaClass}">${elapsed}</span>
           </div>
 
           <div class="kds-items-list">
@@ -155,6 +176,8 @@ const KitchenController = {
     this.container.querySelectorAll('.btn-mark-complete').forEach(btn => {
       btn.addEventListener('click', () => {
         window.appStore.updateOrderStatus(btn.dataset.id, 'Completed');
+        // Confirm the hand-off so an accidental tap is noticed immediately.
+        window.appStore.showToast(`Order #${btn.dataset.id} marked Completed.`, 'success');
       });
     });
   }

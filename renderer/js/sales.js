@@ -79,6 +79,13 @@ const SalesController = {
       });
     }
 
+    const btnXClosePin = document.getElementById('btn-x-close-manager-pin');
+    if (btnXClosePin) {
+      btnXClosePin.addEventListener('click', () => {
+        this.closePinModal();
+      });
+    }
+
     const btnSubmitPin = document.getElementById('btn-submit-pin-modal');
     if (btnSubmitPin) {
       btnSubmitPin.addEventListener('click', () => {
@@ -262,7 +269,7 @@ const SalesController = {
         const attempts = (window.appStore && window.appStore.failedPinAttempts !== undefined)
           ? window.appStore.failedPinAttempts
           : 1;
-        errorText.textContent = `Invalid 4-digit PIN (Attempts: ${attempts}/3). Default is 1234.`;
+        errorText.textContent = `Invalid 4-digit PIN (Attempts: ${attempts}/3). Please try again.`;
         errorText.style.display = 'block';
       }
       const dotsContainer = document.getElementById('manager-pin-dots') || document.getElementById('pin-dots-container');

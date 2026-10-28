@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>TONARI - Point of Sale System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/pos-theme.css">
   <link rel="stylesheet" href="css/mobile-layout.css">
 </head>
@@ -617,12 +620,6 @@
              ============================================================== -->
         <section id="view-admin" class="app-view-panel">
           <div class="admin-view-container">
-            <div class="admin-header-row">
-              <div class="admin-title-wrap">
-                <h1>Admin &amp; Access Control</h1>
-                <p>System privilege matrices, staff account administration, and catalog category management.</p>
-              </div>
-            </div>
 
             <!-- Admin Sub-Navigation Tabs -->
             <div class="admin-subnav">
@@ -644,7 +641,7 @@
                 </div>
                 <div class="admin-stat-card">
                   <span class="admin-stat-label">Access Gating</span>
-                  <span class="admin-stat-val" style="color: #16A34A; font-size: 18px;">PIN Enforced</span>
+                  <span class="admin-stat-val" style="color: var(--status-green); font-size: 18px;">PIN Enforced</span>
                 </div>
               </div>
 
@@ -757,6 +754,14 @@
           <span>Subtotal:</span>
           <span class="cart-subtotal-val tabular-price">PHP 0.00</span>
         </div>
+        <div class="cart-summary-row discount-row">
+          <label for="mobile-cart-discount-select" class="font-small">Discount:</label>
+          <select id="mobile-cart-discount-select" class="discount-select">
+            <option value="none">None (0%)</option>
+            <option value="student">Student (5%)</option>
+            <option value="pwd_senior">Senior / PWD (20%)</option>
+          </select>
+        </div>
         <div class="cart-total-row">
           <span class="total-label">TOTAL:</span>
           <span class="cart-total-val tabular-price">PHP 0.00</span>
@@ -796,6 +801,7 @@
     <div class="modal-box">
       <div class="modal-header">
         <span class="modal-title">Payment &amp; Checkout</span>
+        <button type="button" class="modal-close-btn" id="btn-x-close-payment-modal" title="Close checkout dialog">&times;</button>
       </div>
 
       <div class="modal-body">
@@ -825,7 +831,10 @@
           </div>
 
           <div class="tendered-field-group">
-            <label class="field-label">Amount Tendered:</label>
+            <div class="tender-label-row">
+              <label class="field-label">Amount Tendered:</label>
+              <button type="button" class="btn-keypad btn-tender-del" data-key="backspace" title="Delete last digit">DEL</button>
+            </div>
             <input type="text" id="tendered-input" class="tendered-input-display tabular-price" readonly value="PHP 0.00">
           </div>
 
@@ -881,6 +890,7 @@
     <div class="modal-box" style="max-width: 380px;">
       <div class="modal-header">
         <span class="modal-title">Customer Receipt</span>
+        <button type="button" class="modal-close-btn" id="btn-x-close-receipt-modal" title="Close receipt dialog">&times;</button>
       </div>
 
       <div class="modal-body" style="background-color: #E5E7EB; display: flex; justify-content: center; padding: 12px;">
@@ -907,20 +917,20 @@
       </div>
 
       <div class="modal-body">
-        <div style="margin-bottom: 12px;">
-          <div id="edit-item-name" style="font-size: 16px; font-weight: 800;"></div>
+        <div class="form-group" style="margin-bottom: 14px;">
+          <div id="edit-item-name" style="font-size: 16px; font-weight: 800; color: var(--text-main);"></div>
           <div id="edit-item-id" class="font-mono text-sub font-small"></div>
         </div>
 
-        <div style="margin-bottom: 12px;">
-          <label for="edit-item-price" class="field-label">Unit Price (PHP):</label>
-          <input type="number" id="edit-item-price" class="search-input" step="0.50" min="0">
+        <div class="form-group">
+          <label for="edit-item-price" class="form-label">Unit Price (PHP):</label>
+          <input type="number" id="edit-item-price" class="form-input search-input" step="0.50" min="0">
         </div>
 
-        <div style="margin-bottom: 12px;">
-          <label for="edit-item-threshold" class="field-label">Minimum Stock Alert Threshold:</label>
-          <input type="number" id="edit-item-threshold" class="search-input" step="1" min="1">
-          <div class="text-sub font-small" style="margin-top: 4px;">A warning badge triggers when stock drops below this quantity.</div>
+        <div class="form-group">
+          <label for="edit-item-threshold" class="form-label">Minimum Stock Alert Threshold:</label>
+          <input type="number" id="edit-item-threshold" class="form-input search-input" step="1" min="1">
+          <div class="form-hint">A warning badge triggers when stock drops below this quantity.</div>
         </div>
       </div>
 
@@ -971,32 +981,32 @@
       </div>
 
       <div class="modal-body">
-        <div style="margin-bottom: 14px;">
-          <label class="field-label" style="margin-bottom: 6px; display: block;">Waste Category Type:</label>
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label class="form-label" style="margin-bottom: 6px; display: block;">Waste Category Type:</label>
           <div class="waste-type-toggle" style="display: flex; gap: 8px;">
             <button type="button" id="btn-waste-type-dish" class="waste-type-btn active" data-type="product">Prepared Menu Dish</button>
             <button type="button" id="btn-waste-type-supply" class="waste-type-btn" data-type="ingredient">Raw Kitchen Supply</button>
           </div>
         </div>
 
-        <div style="margin-bottom: 14px;">
-          <label for="waste-product-select" id="waste-select-label" class="field-label">Select Wasted Dish:</label>
-          <select id="waste-product-select" class="discount-select" style="width: 100%; padding: 8px 12px;">
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label for="waste-product-select" id="waste-select-label" class="form-label">Select Wasted Dish:</label>
+          <select id="waste-product-select" class="form-select discount-select" style="width: 100%;">
             <!-- Populated dynamically -->
           </select>
         </div>
 
-        <div style="margin-bottom: 14px;">
-          <label for="waste-qty-input" class="field-label">Wasted Quantity:</label>
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label for="waste-qty-input" class="form-label">Wasted Quantity:</label>
           <div style="display: flex; gap: 8px; align-items: center;">
-            <input type="number" id="waste-qty-input" class="search-input" value="1" min="1" step="any" style="flex: 1;">
+            <input type="number" id="waste-qty-input" class="form-input search-input" value="1" min="1" step="any" style="flex: 1;">
             <span id="waste-unit-label" class="text-sub font-mono font-bold" style="min-width: 60px;">portions</span>
           </div>
         </div>
 
-        <div style="margin-bottom: 14px;">
-          <label for="waste-reason-select" class="field-label">Reason for Spoilage / Disposal:</label>
-          <select id="waste-reason-select" class="discount-select" style="width: 100%; padding: 8px 12px;">
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label for="waste-reason-select" class="form-label">Reason for Spoilage / Disposal:</label>
+          <select id="waste-reason-select" class="form-select discount-select" style="width: 100%;">
             <option value="Dropped / Spilled">Dropped / Spilled during prep</option>
             <option value="Burned / Overcooked">Burned / Overcooked in kitchen</option>
             <option value="Expired / Spoiled">Expired / Quality check rejection</option>
@@ -1005,9 +1015,9 @@
           </select>
         </div>
 
-        <div style="margin-bottom: 14px;">
-          <label for="waste-notes-input" class="field-label">Staff Incident Notes (Optional):</label>
-          <input type="text" id="waste-notes-input" class="search-input" placeholder="e.g. Takoyaki pan overheat, spilled batter">
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label for="waste-notes-input" class="form-label">Staff Incident Notes (Optional):</label>
+          <input type="text" id="waste-notes-input" class="form-input search-input" placeholder="e.g. Takoyaki pan overheat, spilled batter">
         </div>
       </div>
 
@@ -1030,13 +1040,13 @@
 
       <div class="modal-body">
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
-          <div>
-            <label for="add-ing-name" class="field-label">Supply Name *</label>
-            <input type="text" id="add-ing-name" class="search-input" placeholder="e.g. Premium Beef Slices">
+          <div class="form-group">
+            <label for="add-ing-name" class="form-label">Supply Name *</label>
+            <input type="text" id="add-ing-name" class="form-input search-input" placeholder="e.g. Premium Beef Slices">
           </div>
-          <div>
-            <label for="add-ing-category" class="field-label">Category</label>
-            <select id="add-ing-category" class="discount-select" style="width: 100%; padding: 8px 10px;">
+          <div class="form-group">
+            <label for="add-ing-category" class="form-label">Category</label>
+            <select id="add-ing-category" class="form-select discount-select" style="width: 100%;">
               <option value="Proteins">Proteins</option>
               <option value="Starches">Starches</option>
               <option value="Broths">Broths</option>
@@ -1050,13 +1060,13 @@
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
-          <div>
-            <label for="add-ing-stock" class="field-label">Initial Physical Stock *</label>
-            <input type="number" id="add-ing-stock" class="search-input" value="100" min="0" step="any">
+          <div class="form-group">
+            <label for="add-ing-stock" class="form-label">Initial Physical Stock *</label>
+            <input type="number" id="add-ing-stock" class="form-input search-input" value="100" min="0" step="any">
           </div>
-          <div>
-            <label for="add-ing-unit" class="field-label">Measurement Unit *</label>
-            <select id="add-ing-unit" class="discount-select" style="width: 100%; padding: 8px 10px;">
+          <div class="form-group">
+            <label for="add-ing-unit" class="form-label">Measurement Unit *</label>
+            <select id="add-ing-unit" class="form-select discount-select" style="width: 100%;">
               <option value="g">Grams (g)</option>
               <option value="ml">Milliliters (ml)</option>
               <option value="pcs">Pieces (pcs)</option>
@@ -1067,13 +1077,13 @@
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
-          <div>
-            <label for="add-ing-threshold" class="field-label">Min Alert Threshold</label>
-            <input type="number" id="add-ing-threshold" class="search-input" value="20" min="1" step="any">
+          <div class="form-group">
+            <label for="add-ing-threshold" class="form-label">Min Alert Threshold</label>
+            <input type="number" id="add-ing-threshold" class="form-input search-input" value="20" min="1" step="any">
           </div>
-          <div>
-            <label for="add-ing-cost" class="field-label">Unit Cost (PHP)</label>
-            <input type="number" id="add-ing-cost" class="search-input" value="0.50" min="0" step="0.01">
+          <div class="form-group">
+            <label for="add-ing-cost" class="form-label">Unit Cost (PHP)</label>
+            <input type="number" id="add-ing-cost" class="form-input search-input" value="0.50" min="0" step="0.01">
           </div>
         </div>
       </div>
@@ -1097,20 +1107,20 @@
 
       <div class="modal-body" style="overflow-y: auto; padding-right: 8px;">
         <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px; margin-bottom: 12px;">
-          <div>
-            <label for="add-prod-name" class="field-label">Product Name *</label>
-            <input type="text" id="add-prod-name" class="search-input" placeholder="e.g. Spicy Chicken Katsu Bowl">
+          <div class="form-group">
+            <label for="add-prod-name" class="form-label">Product Name *</label>
+            <input type="text" id="add-prod-name" class="form-input search-input" placeholder="e.g. Spicy Chicken Katsu Bowl">
           </div>
-          <div>
-            <label for="add-prod-price" class="field-label">Retail Price (PHP) *</label>
-            <input type="number" id="add-prod-price" class="search-input" placeholder="185.00" min="0" step="0.01">
+          <div class="form-group">
+            <label for="add-prod-price" class="form-label">Retail Price (PHP) *</label>
+            <input type="number" id="add-prod-price" class="form-input search-input" placeholder="185.00" min="0" step="0.01">
           </div>
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
-          <div>
-            <label for="add-prod-category" class="field-label">Category</label>
-            <select id="add-prod-category" class="discount-select" style="width: 100%; padding: 8px 10px;">
+          <div class="form-group">
+            <label for="add-prod-category" class="form-label">Category</label>
+            <select id="add-prod-category" class="form-select discount-select" style="width: 100%;">
               <option value="curry">Katsu Curry</option>
               <option value="takoyaki">Takoyaki</option>
               <option value="ramen">Ramen</option>
@@ -1120,20 +1130,20 @@
               <option value="specials">Chef Specials</option>
             </select>
           </div>
-          <div>
-            <label for="add-prod-minstock" class="field-label">Min Alert Portions</label>
-            <input type="number" id="add-prod-minstock" class="search-input" value="5" min="1">
+          <div class="form-group">
+            <label for="add-prod-minstock" class="form-label">Min Alert Portions</label>
+            <input type="number" id="add-prod-minstock" class="form-input search-input" value="5" min="1">
           </div>
         </div>
 
-        <div style="margin-bottom: 12px;">
-          <label for="add-prod-desc" class="field-label">Description (Optional)</label>
-          <input type="text" id="add-prod-desc" class="search-input" placeholder="Crispy panko chicken with rich Japanese curry sauce">
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label for="add-prod-desc" class="form-label">Description (Optional)</label>
+          <input type="text" id="add-prod-desc" class="form-input search-input" placeholder="Crispy panko chicken with rich Japanese curry sauce">
         </div>
 
-        <div style="margin-bottom: 14px;">
-          <label for="add-prod-modifiers" class="field-label">Modifiers / Flavors (Optional, comma-separated)</label>
-          <input type="text" id="add-prod-modifiers" class="search-input" placeholder="Mild, Medium Spicy, Extra Hot">
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label for="add-prod-modifiers" class="form-label">Modifiers / Flavors (Optional, comma-separated)</label>
+          <input type="text" id="add-prod-modifiers" class="form-input search-input" placeholder="Mild, Medium Spicy, Extra Hot">
         </div>
 
         <!-- Recipe Bill of Materials Section -->
@@ -1170,11 +1180,12 @@
     <div class="modal-box" style="max-width: 380px;">
       <div class="modal-header">
         <span class="modal-title" id="pin-modal-title">Manager PIN Verification</span>
+        <button type="button" class="modal-close-btn" id="btn-x-close-manager-pin" title="Close PIN dialog">&times;</button>
       </div>
 
       <div class="modal-body" style="text-align: center; padding: 18px 20px 14px;">
         <div id="pin-target-order-label" class="font-bold text-main" style="margin-bottom: 6px; font-size: 14px;">Manager Authorization Required</div>
-        <div id="pin-modal-subtitle" class="text-sub font-small" style="margin-bottom: 14px;">Enter the 4-digit security PIN to proceed. Default PIN is 1234.</div>
+        <div id="pin-modal-subtitle" class="text-sub font-small" style="margin-bottom: 14px;">Enter your 4-digit Manager or Admin security PIN to authorize this action.</div>
 
         <!-- Masked PIN Status Indicator Dots & Synced Input Wrapper -->
         <div class="pin-display-wrapper">
@@ -1222,6 +1233,7 @@
     <div class="modal-box" style="max-width: 540px;">
       <div class="modal-header">
         <span class="modal-title">Terminal &amp; Network Diagnostics</span>
+        <button type="button" class="modal-close-btn" id="btn-x-close-diag-modal" title="Close diagnostics dialog">&times;</button>
       </div>
 
       <div class="modal-body">
@@ -1363,32 +1375,39 @@
 
   <!-- Modal: Staff Account Management (Create / Edit) -->
   <div id="admin-user-modal" class="modal-overlay modal-backdrop">
-    <div class="modal-box modal-card" style="max-width: 440px;">
+    <div class="modal-box modal-card" style="max-width: 480px;">
       <div class="modal-header">
-        <h3 id="admin-user-modal-title" class="modal-title">Create Staff Account</h3>
+        <div>
+          <h3 id="admin-user-modal-title" class="modal-title">Create Staff Account</h3>
+          <p class="modal-subtitle">Configure operator identity, role permissions, and terminal PIN</p>
+        </div>
         <button type="button" class="modal-close-btn" id="btn-close-admin-user-modal" title="Close">&times;</button>
       </div>
       <div class="modal-body">
         <input type="hidden" id="admin-user-id" value="">
-        <div class="form-group" style="margin-bottom: 12px;">
+        <div class="form-group">
           <label class="form-label" for="admin-user-name">Full Name</label>
           <input type="text" id="admin-user-name" class="form-input" placeholder="e.g. Maria Santos">
+          <span class="form-hint">Displayed on receipts, shift logs, and audit trails</span>
         </div>
-        <div class="form-group" style="margin-bottom: 12px;">
-          <label class="form-label" for="admin-user-username">Username</label>
-          <input type="text" id="admin-user-username" class="form-input" placeholder="e.g. maria">
+        <div class="form-row-2col">
+          <div class="form-group">
+            <label class="form-label" for="admin-user-username">Username</label>
+            <input type="text" id="admin-user-username" class="form-input font-mono" placeholder="e.g. maria">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="admin-user-pin">4-Digit Security PIN</label>
+            <input type="password" id="admin-user-pin" class="form-input font-mono tabular-nums" maxlength="6" placeholder="****">
+          </div>
         </div>
-        <div class="form-group" style="margin-bottom: 12px;">
+        <div class="form-group" style="margin-bottom: 0;">
           <label class="form-label" for="admin-user-role">System Role</label>
           <select id="admin-user-role" class="form-input">
             <option value="Cashier">Cashier (Order Entry &amp; Cart)</option>
             <option value="Kitchen">Kitchen (Queue &amp; Waste Logs)</option>
             <option value="Admin">Admin (Unrestricted Full Access)</option>
           </select>
-        </div>
-        <div class="form-group" style="margin-bottom: 12px;">
-          <label class="form-label" for="admin-user-pin">4-Digit Security PIN</label>
-          <input type="password" id="admin-user-pin" class="form-input font-mono" maxlength="6" placeholder="****">
+          <span class="form-hint">Determines workspace access and Manager PIN override authority</span>
         </div>
       </div>
       <div class="modal-footer">
@@ -1400,24 +1419,28 @@
 
   <!-- Modal: Dynamic Category Creation -->
   <div id="admin-category-modal" class="modal-overlay modal-backdrop">
-    <div class="modal-box modal-card" style="max-width: 420px;">
+    <div class="modal-box modal-card" style="max-width: 460px;">
       <div class="modal-header">
-        <h3 class="modal-title">Add New Category</h3>
+        <div>
+          <h3 class="modal-title">Add New Category</h3>
+          <p class="modal-subtitle">Register a classification group for POS dishes or raw supplies</p>
+        </div>
         <button type="button" class="modal-close-btn" id="btn-close-admin-cat-modal" title="Close">&times;</button>
       </div>
       <div class="modal-body">
-        <div class="form-group" style="margin-bottom: 12px;">
+        <div class="form-group">
           <label class="form-label" for="admin-cat-name">Category Name</label>
           <input type="text" id="admin-cat-name" class="form-input" placeholder="e.g. Desserts, Hot Teas, Dairy">
         </div>
-        <div class="form-group" style="margin-bottom: 12px;">
+        <div class="form-group">
           <label class="form-label" for="admin-cat-type">Category Type</label>
           <select id="admin-cat-type" class="form-input">
             <option value="menu">Menu Dish (Visible on POS Catalog)</option>
             <option value="raw">Raw Kitchen Supply (Inventory Only)</option>
           </select>
+          <span class="form-hint">Menu categories appear as filter tabs on the cashier register</span>
         </div>
-        <div class="form-group" style="margin-bottom: 12px;">
+        <div class="form-group" style="margin-bottom: 0;">
           <label class="form-label" for="admin-cat-desc">Description (Optional)</label>
           <input type="text" id="admin-cat-desc" class="form-input" placeholder="e.g. Sweet pastries and soft-serve items">
         </div>
@@ -1431,20 +1454,54 @@
 
   <!-- Modal: Custom Stock Adjustment (Replaces native prompt) -->
   <div id="restock-adjust-modal" class="modal-overlay modal-backdrop">
-    <div class="modal-box modal-card" style="max-width: 400px;">
+    <div class="modal-box modal-card" style="max-width: 480px;">
       <div class="modal-header">
-        <h3 class="modal-title">Adjust Physical Stock</h3>
+        <div>
+          <h3 class="modal-title" id="adjust-modal-title">Adjust Physical Stock</h3>
+          <p class="modal-subtitle" id="adjust-modal-subtitle">Record a delivery or reconcile a physical count</p>
+        </div>
         <button type="button" class="modal-close-btn" id="btn-close-adjust-modal" title="Close">&times;</button>
       </div>
       <div class="modal-body">
         <input type="hidden" id="adjust-ingredient-id" value="">
-        <p class="font-small text-sub" style="margin-bottom: 12px;">
-          Adjusting count for: <strong id="adjust-ingredient-name" class="text-main"></strong>
-        </p>
-        <div class="form-group" style="margin-bottom: 12px;">
-          <label class="form-label" for="adjust-stock-delta">Stock Adjustment Delta (<span id="adjust-ingredient-unit">g</span>)</label>
-          <input type="number" id="adjust-stock-delta" class="form-input font-mono tabular-nums" step="any" placeholder="Use negative for deduction, positive for addition">
-          <span class="font-small text-sub" style="display: block; margin-top: 4px;">Example: +500 to add stock, or -250 for prep trim</span>
+        <div class="adjust-target-banner">
+          <div class="adjust-target-meta">
+            <span class="adjust-sku-badge font-mono" id="adjust-ingredient-sku"></span>
+            <strong id="adjust-ingredient-name" class="adjust-target-title"></strong>
+          </div>
+          <span class="category-tag font-mono" id="adjust-ingredient-unit-badge"></span>
+        </div>
+
+        <!-- Modern Minimalist Segmented Control: Delta (+/-) vs Set Exact (=) -->
+        <div class="adjust-mode-segmented" role="tablist" aria-label="Stock Operation Mode">
+          <button type="button" class="adjust-mode-btn active" id="btn-adjust-mode-delta" data-mode="delta">Adjust by Delta (+/-)</button>
+          <button type="button" class="adjust-mode-btn" id="btn-adjust-mode-set" data-mode="set">Set Exact Stock (=)</button>
+        </div>
+
+        <div class="stock-adjust-summary">
+          <div class="stock-adjust-metric">
+            <span class="stock-metric-label">Current Stock</span>
+            <span class="stock-metric-val tabular-nums" id="adjust-current-stock">0</span>
+          </div>
+          <div class="stock-adjust-metric">
+            <span class="stock-metric-label" id="adjust-middle-metric-label">Adjustment</span>
+            <span class="stock-metric-val tabular-nums" id="adjust-delta-preview">0</span>
+          </div>
+          <div class="stock-adjust-metric">
+            <span class="stock-metric-label" id="adjust-final-metric-label">Projected Stock</span>
+            <span class="stock-metric-val tabular-nums" id="adjust-projected-stock">0</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" id="adjust-preset-group-label">Quick Adjustment Presets</label>
+          <div class="adjust-preset-grid" id="adjust-preset-chips"></div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label" for="adjust-stock-delta"><span id="adjust-input-label-text">Stock Adjustment Delta</span> (<span id="adjust-ingredient-unit">g</span>)</label>
+          <input type="number" id="adjust-stock-delta" class="form-input font-mono tabular-nums" step="any" placeholder="e.g. +500 or -250">
+          <span class="form-hint" id="adjust-input-hint">Positive for new deliveries, negative for prep trim or corrections</span>
         </div>
       </div>
       <div class="modal-footer">
@@ -1456,17 +1513,27 @@
 
   <!-- Modal: Structured Order Voiding (Replaces native prompt) -->
   <div id="order-void-modal" class="modal-overlay modal-backdrop">
-    <div class="modal-box modal-card" style="max-width: 420px;">
+    <div class="modal-box modal-card" style="max-width: 460px;">
       <div class="modal-header">
-        <h3 class="modal-title text-danger">Void Customer Order</h3>
+        <div>
+          <h3 class="modal-title">Void Customer Order</h3>
+          <p class="modal-subtitle">Reverses revenue and restores recipe ingredient stock</p>
+        </div>
         <button type="button" class="modal-close-btn" id="btn-close-order-void-modal" title="Close">&times;</button>
       </div>
       <div class="modal-body">
         <input type="hidden" id="void-order-id" value="">
-        <p class="font-small text-sub" style="margin-bottom: 12px;">
-          Voiding Order <strong id="void-order-label" class="text-main font-mono"></strong> (<span id="void-order-amount" class="tabular-price font-bold"></span>)
-        </p>
-        <div class="form-group" style="margin-bottom: 12px;">
+        <div class="void-order-banner">
+          <div>
+            <span class="stock-metric-label">Target Order</span>
+            <strong id="void-order-label" class="void-order-id-text font-mono"></strong>
+          </div>
+          <div style="text-align: right;">
+            <span class="stock-metric-label">Total Reversal</span>
+            <span id="void-order-amount" class="void-order-amount-text tabular-price"></span>
+          </div>
+        </div>
+        <div class="form-group">
           <label class="form-label" for="void-order-reason-select">Official Void Reason</label>
           <select id="void-order-reason-select" class="form-input">
             <option value="Customer cancellation">Customer cancellation</option>
@@ -1476,7 +1543,7 @@
             <option value="Other">Other (specify below)</option>
           </select>
         </div>
-        <div class="form-group" style="margin-bottom: 12px;">
+        <div class="form-group" style="margin-bottom: 0;">
           <label class="form-label" for="void-order-notes">Audit Notes (Optional)</label>
           <input type="text" id="void-order-notes" class="form-input" placeholder="Additional audit details...">
         </div>

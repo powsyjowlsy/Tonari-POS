@@ -225,14 +225,52 @@ const CheckoutController = {
     const btnCancel = document.getElementById('btn-cancel-checkout');
     if (btnCancel) btnCancel.addEventListener('click', () => this.closeCheckout());
 
+    const btnXCloseCheckout = document.getElementById('btn-x-close-payment-modal');
+    if (btnXCloseCheckout) btnXCloseCheckout.addEventListener('click', () => this.closeCheckout());
+
     const btnConfirm = document.getElementById('btn-confirm-payment');
     if (btnConfirm) btnConfirm.addEventListener('click', () => this.confirmPayment());
 
     const btnCloseReceipt = document.getElementById('btn-close-receipt');
     if (btnCloseReceipt) btnCloseReceipt.addEventListener('click', () => this.closeReceipt());
 
+    const btnXCloseReceipt = document.getElementById('btn-x-close-receipt-modal');
+    if (btnXCloseReceipt) btnXCloseReceipt.addEventListener('click', () => this.closeReceipt());
+
     const btnPrintReceipt = document.getElementById('btn-print-receipt');
     if (btnPrintReceipt) btnPrintReceipt.addEventListener('click', () => this.printReceipt());
+
+    // Physical keyboard accelerators for the tender and receipt modals
+    document.addEventListener('keydown', (e) => {
+      const paymentOpen = this.modal && this.modal.classList.contains('modal-visible');
+      const receiptOpen = this.receiptModal && this.receiptModal.classList.contains('modal-visible');
+
+      if (paymentOpen) {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          this.closeCheckout();
+          return;
+        }
+        // Never hijack typing inside the GCash reference field.
+        if (this.currentMethod !== 'Cash') return;
+        if (/^[0-9]$/.test(e.key) || e.key === '.') {
+          e.preventDefault();
+          this.handleKeypad(e.key);
+        } else if (e.key === 'Backspace') {
+          e.preventDefault();
+          this.handleKeypad('backspace');
+        } else if (e.key === 'Enter') {
+          const confirmBtn = document.getElementById('btn-confirm-payment');
+          if (confirmBtn && !confirmBtn.disabled) {
+            e.preventDefault();
+            this.confirmPayment();
+          }
+        }
+      } else if (receiptOpen && e.key === 'Escape') {
+        e.preventDefault();
+        this.closeReceipt();
+      }
+    });
   }
 };
 
