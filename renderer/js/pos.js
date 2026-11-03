@@ -83,12 +83,25 @@ const PosController = {
       mobileDiscountSelect.addEventListener('change', (e) => applyDiscountValue(e.target.value));
     }
 
-    // Clear cart buttons (Desktop & Mobile)
+    // Clear cart buttons (Desktop & Mobile) with 2-step accidental data-loss safeguard
     document.querySelectorAll('.btn-clear-cart').forEach(btn => {
+      let confirmTimeout = null;
       btn.addEventListener('click', () => {
-        if (window.appStore.cart.length > 0) {
+        if (!window.appStore.cart || window.appStore.cart.length === 0) return;
+
+        if (btn.classList.contains('confirm-active')) {
+          clearTimeout(confirmTimeout);
+          btn.classList.remove('confirm-active');
+          btn.textContent = 'Clear';
           window.appStore.clearCart();
           window.appStore.showToast('Order cart cleared.', 'info');
+        } else {
+          btn.classList.add('confirm-active');
+          btn.textContent = 'Confirm Clear?';
+          confirmTimeout = setTimeout(() => {
+            btn.classList.remove('confirm-active');
+            btn.textContent = 'Clear';
+          }, 3500);
         }
       });
     });

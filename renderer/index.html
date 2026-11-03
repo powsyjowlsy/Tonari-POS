@@ -6,7 +6,7 @@
   <title>TONARI - Point of Sale System</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/pos-theme.css">
   <link rel="stylesheet" href="css/mobile-layout.css">
 </head>
@@ -896,6 +896,7 @@
       <div class="modal-body" style="background-color: #E5E7EB; display: flex; justify-content: center; padding: 12px;">
         <div class="receipt-paper-box">
           <pre id="receipt-thermal-paper" class="receipt-paper"></pre>
+          <div class="receipt-sawtooth-cut" aria-hidden="true"></div>
         </div>
       </div>
 
@@ -1239,31 +1240,55 @@
       <div class="modal-body">
         <!-- Section 1: Mobile Network Discovery & LAN Server -->
         <div class="diag-section-header">Mobile Device &amp; LAN Discovery</div>
-        <div class="diag-card" style="margin-bottom: 14px;">
-          <div class="diag-row">
-            <span class="diag-label">Server Status:</span>
-            <span id="diag-server-status" class="diag-status-badge status-online">Active LAN Server</span>
+        <div class="diag-card diag-network-card" style="margin-bottom: 14px;">
+          <!-- Status Row -->
+          <div class="diag-status-header-row">
+            <div class="diag-status-indicator-group">
+              <span class="diag-label">Server Status:</span>
+              <span id="diag-server-status" class="diag-status-badge status-online">Active LAN Server</span>
+            </div>
+            <span class="diag-channel-tag">Local LAN / Wi-Fi</span>
           </div>
-          <div class="diag-row">
-            <span class="diag-label">Server LAN URL:</span>
-            <span id="diag-server-url" class="diag-val-url font-mono font-bold tabular-nums">http://127.0.0.1:3000</span>
+
+          <!-- Server Access URL Box -->
+          <div class="diag-url-box">
+            <div class="diag-url-label">Primary Server Address</div>
+            <div class="diag-url-field-group">
+              <svg class="diag-url-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="2" y1="12" x2="22" y2="12"></line>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+              </svg>
+              <span id="diag-server-url" class="diag-val-url font-mono font-bold tabular-nums">http://127.0.0.1:3000</span>
+            </div>
           </div>
-          <div class="diag-row">
-            <span class="diag-label">Local IP Address:</span>
-            <span id="diag-server-ip" class="diag-value font-mono tabular-nums">127.0.0.1</span>
+
+          <!-- Network Endpoint Parameters Grid -->
+          <div class="diag-param-grid">
+            <div class="diag-param-cell">
+              <span class="diag-param-label">Host IP Address</span>
+              <span id="diag-server-ip" class="diag-value font-mono tabular-nums">127.0.0.1</span>
+            </div>
+            <div class="diag-param-cell">
+              <span class="diag-param-label">Port</span>
+              <span id="diag-server-port" class="diag-value font-mono tabular-nums">3000</span>
+            </div>
           </div>
-          <div class="diag-row">
-            <span class="diag-label">Listening Port:</span>
-            <span id="diag-server-port" class="diag-value font-mono tabular-nums">3000</span>
+
+          <!-- Companion Device Wi-Fi Access Banner -->
+          <div class="diag-companion-box">
+            <div class="diag-companion-header">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: #64748B;">
+                <path d="M5 12.55a11 11 0 0 1 14.08 0"></path>
+                <path d="M1.42 9a16 16 0 0 1 21.16 0"></path>
+                <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
+                <line x1="12" y1="20" x2="12.01" y2="20"></line>
+              </svg>
+              <span class="diag-companion-title">Handheld &amp; Mobile Companion Access</span>
+            </div>
+            <p class="diag-hint">Connect handhelds to the same Wi-Fi network and navigate to the broadcast link:</p>
+            <div id="mobile-network-link" class="diag-broadcast-chip font-mono tabular-nums">Mobile Wi-Fi: Loading...</div>
           </div>
-          <!-- Preserved diagnostic element for backwards compatibility and automated testing -->
-          <div class="diag-row" style="border-bottom: none; margin-top: 6px; padding-top: 6px;">
-            <span class="diag-label">Discovery Badge:</span>
-            <span id="mobile-network-link" class="network-pill" style="display: inline-block;">Mobile Wi-Fi: Loading...</span>
-          </div>
-          <p class="diag-hint text-sub font-small" style="margin-top: 8px;">
-            Connect smartphones or wireless handhelds to the same Wi-Fi network and open the Server LAN URL in any browser.
-          </p>
         </div>
 
         <!-- Section 2: Hardware & POS Peripherals -->
