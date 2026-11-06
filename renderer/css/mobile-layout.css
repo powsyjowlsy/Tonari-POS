@@ -164,7 +164,25 @@
     display: none !important;
   }
 
-  .dash-kpi-row {
+  
+  /* Metrics Ledger Strip Mobile Reflow */
+  .metrics-ledger-strip {
+    grid-template-columns: 1fr !important;
+    min-height: auto !important;
+    margin-bottom: 16px !important;
+  }
+  .ledger-cell {
+    border-right: none !important;
+    border-bottom: 1px solid #F1F5F9 !important;
+    padding: 12px 14px !important;
+  }
+  .ledger-cell:last-child {
+    border-bottom: none !important;
+  }
+  .ledger-cell .cell-value {
+    font-size: 20px !important;
+  }
+.dash-kpi-row {
     grid-template-columns: repeat(2, 1fr) !important;
     gap: 10px !important;
   }

@@ -3,7 +3,11 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
-const PORT = 3000;
+const CANDIDATE_PORTS = [3000, 3001, 3002, 3005, 3030, 8080, 8085, 0];
+let currentPortIndex = 0;
+let activePort = 3000;
+let serverStatus = 'starting';
+
 const RENDERER_DIR = path.join(__dirname, 'renderer');
 
 // Helper to determine active local network IP address (filters out virtual VPNs like Radmin)
@@ -73,7 +77,8 @@ const server = http.createServer((req, res) => {
       appName: 'Tonari POS',
       version: '1.1.0',
       localIp: getLocalNetworkIp(),
-      port: PORT
+      port: activePort,
+      status: serverStatus
     }));
     return;
   }
@@ -101,16 +106,71 @@ const server = http.createServer((req, res) => {
   });
 });
 
-server.listen(PORT, '0.0.0.0', () => {
-  const localIp = getLocalNetworkIp();
-  console.log('====================================================');
-  console.log(' TONARI POS - LOCAL NETWORK SERVER STARTED');
-  console.log('====================================================');
-  console.log(` Desktop / Local Access : http://localhost:${PORT}`);
-  console.log(` Mobile Smartphone Link : http://${localIp}:${PORT}`);
-  console.log(' Connect your smartphone to the same Wi-Fi network');
-  console.log(' and open the link above to use the mobile POS terminal.');
-  console.log('====================================================');
-});
+function startServer() {
+  if (currentPortIndex >= CANDIDATE_PORTS.length) {
+    serverStatus = 'offline';
+    console.warn('[TONARI POS] Unable to bind network server to any candidate port. Running in local standalone mode.');
+    return;
+  }
 
-module.exports = { server, getLocalNetworkIp, PORT };
+  const portToTry = CANDIDATE_PORTS[currentPortIndex];
+
+  const onListen = () => {
+    server.removeListener('error', onError);
+    server.on('error', (runtimeErr) => {
+      console.error('[TONARI POS] Runtime network server error: ' + runtimeErr.message);
+    });
+
+    const addr = server.address();
+    activePort = (addr && typeof addr === 'object') ? addr.port : portToTry;
+    serverStatus = 'online';
+    const localIp = getLocalNetworkIp();
+    console.log('====================================================');
+    console.log(' TONARI POS - LOCAL NETWORK SERVER STARTED');
+    console.log('====================================================');
+    console.log(' Desktop / Local Access : http://localhost:' + activePort);
+    console.log(' Mobile Smartphone Link : http://' + localIp + ':' + activePort);
+    console.log(' Connect your smartphone to the same Wi-Fi network');
+    console.log(' and open the link above to use the mobile POS terminal.');
+    console.log('====================================================');
+  };
+
+  const onError = (err) => {
+    server.removeListener('listening', onListen);
+    if (err.code === 'EACCES' || err.code === 'EADDRINUSE') {
+      console.warn('[TONARI POS] Port ' + portToTry + ' unavailable (' + err.code + '). Trying next fallback...');
+      currentPortIndex++;
+      setImmediate(() => startServer());
+    } else {
+      serverStatus = 'error';
+      console.error('[TONARI POS] Server socket error: ' + err.message);
+    }
+  };
+
+  server.once('listening', onListen);
+  server.once('error', onError);
+
+  try {
+    server.listen(portToTry, '0.0.0.0');
+  } catch (listenSyncErr) {
+    onError(listenSyncErr);
+  }
+}
+
+startServer();
+
+function getActivePort() {
+  return activePort;
+}
+
+function getServerStatus() {
+  return serverStatus;
+}
+
+module.exports = {
+  server,
+  getLocalNetworkIp,
+  getActivePort,
+  getServerStatus,
+  get PORT() { return activePort; }
+};

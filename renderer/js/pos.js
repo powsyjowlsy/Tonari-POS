@@ -351,7 +351,7 @@ const PosController = {
         <div class="product-card ${isOutOfStock ? 'card-disabled' : ''}" data-id="${p.id}" ${isOutOfStock ? 'aria-disabled="true"' : ''}>
           <div class="product-card-top">
             <span class="product-cat-tag">${p.categoryName || p.category}</span>
-            <div style="display: flex; gap: 4px; align-items: center;">
+            <div class="product-badges-wrap">
               ${modifierPill}
               ${stockBadge}
             </div>

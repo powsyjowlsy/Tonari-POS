@@ -1028,21 +1028,47 @@ class Store {
   getWeeklySalesTrend() {
     const days = [];
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
     for (let i = 6; i >= 0; i--) {
-      const d = new Date(today);
-      d.setDate(today.getDate() - i);
-      const formattedDate = d.toLocaleDateString('en-PH', {
+      const targetDate = new Date(today);
+      targetDate.setDate(today.getDate() - i);
+      const targetYear = targetDate.getFullYear();
+      const targetMonth = targetDate.getMonth();
+      const targetDay = targetDate.getDate();
+
+      const shortDay = i === 0 ? 'Today' : targetDate.toLocaleDateString('en-US', { weekday: 'short' });
+      const dateSub = targetDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const formattedDate = targetDate.toLocaleDateString('en-PH', {
         year: 'numeric',
         month: 'short',
         day: 'numeric'
       });
-      const shortDay = i === 0 ? 'Today' : d.toLocaleDateString('en-US', { weekday: 'short' });
-      const dateSub = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
-      // Match orders for that day
-      const dayOrders = this.orders.filter(o => o.status !== 'Voided' && o.date === formattedDate);
-      const revenue = dayOrders.reduce((sum, o) => sum + parseFloat(o.totalDue), 0);
+      // Match orders for that day by year, month, date components or exact formatted date
+      const dayOrders = this.orders.filter(o => {
+        if (o.status === 'Voided') return false;
+        if (o.date === formattedDate) return true;
+        if (o.timestamp) {
+          const t = new Date(o.timestamp);
+          if (!isNaN(t.getTime())) {
+            return t.getFullYear() === targetYear &&
+                   t.getMonth() === targetMonth &&
+                   t.getDate() === targetDay;
+          }
+        }
+        if (o.date) {
+          const parsed = new Date(o.date);
+          if (!isNaN(parsed.getTime())) {
+            return parsed.getFullYear() === targetYear &&
+                   parsed.getMonth() === targetMonth &&
+                   parsed.getDate() === targetDay;
+          }
+        }
+        return false;
+      });
+
+      const revenue = dayOrders.reduce((sum, o) => sum + parseFloat(o.totalDue || 0), 0);
 
       days.push({
         dateStr: formattedDate,

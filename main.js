@@ -4,7 +4,7 @@ const fs = require('fs');
 const os = require('os');
 
 // Start the local network server for smartphone access
-const { server, getLocalNetworkIp, PORT } = require('./server');
+const { server, getLocalNetworkIp, getActivePort, getServerStatus, PORT } = require('./server');
 
 let mainWindow = null;
 
@@ -87,9 +87,13 @@ ipcMain.handle('save-csv-report', async (event, { filename, content }) => {
 
 // IPC Handler: Retrieve Local Network Info
 ipcMain.handle('get-network-info', async () => {
+  const ip = getActiveIp();
+  const port = getActivePort ? getActivePort() : PORT;
+  const status = getServerStatus ? getServerStatus() : 'online';
   return {
-    localIp: getActiveIp(),
-    port: PORT,
-    fullUrl: `http://${getActiveIp()}:${PORT}`
+    localIp: ip,
+    port: port,
+    status: status,
+    fullUrl: status === 'online' ? `http://${ip}:${port}` : 'Local Standalone'
   };
 });

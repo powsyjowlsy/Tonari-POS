@@ -3,14 +3,27 @@
 
 document.addEventListener('DOMContentLoaded', async () => {
   // --------------------------------------------------------------------------
-  // 1. Initial Demonstration Data Seeding (if brand new local installation)
+  // 1. Initial Demonstration Data Seeding & 7-Day Rolling Window Synchronization
   // --------------------------------------------------------------------------
-  if (window.appStore.orders.length === 0) {
+  const isDemoOrderSet = window.appStore.orders.length > 0 && 
+    window.appStore.orders.every(o => o.id && /^TN-100[1-5]$/.test(o.id));
+  const hasOrdersInPast7Days = window.appStore.orders.some(o => {
+    const t = o.timestamp ? new Date(o.timestamp) : new Date(o.date);
+    return !isNaN(t.getTime()) && (Date.now() - t.getTime() <= 7 * 86400000);
+  });
+
+  if (window.appStore.orders.length === 0 || (isDemoOrderSet && !hasOrdersInPast7Days)) {
     const today = new Date();
     const formatDay = (daysAgo) => {
       const d = new Date(today);
       d.setDate(today.getDate() - daysAgo);
       return d.toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' });
+    };
+    const getTimestamp = (daysAgo, hours = 12, mins = 30) => {
+      const d = new Date(today);
+      d.setDate(today.getDate() - daysAgo);
+      d.setHours(hours, mins, 0, 0);
+      return d.toISOString();
     };
 
     const historicalOrders = [
@@ -31,7 +44,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         status: 'Completed',
         date: formatDay(5),
         time: '12:15:00 PM',
-        timestamp: new Date(Date.now() - 5 * 86400000).toISOString(),
+        timestamp: getTimestamp(5, 12, 15),
         cashier: 'Staff Lane 1'
       },
       {
@@ -52,7 +65,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         status: 'Completed',
         date: formatDay(4),
         time: '01:45:00 PM',
-        timestamp: new Date(Date.now() - 4 * 86400000).toISOString(),
+        timestamp: getTimestamp(4, 13, 45),
         cashier: 'Staff Lane 1'
       },
       {
@@ -72,7 +85,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         status: 'Completed',
         date: formatDay(2),
         time: '06:30:00 PM',
-        timestamp: new Date(Date.now() - 2 * 86400000).toISOString(),
+        timestamp: getTimestamp(2, 18, 30),
         cashier: 'Staff Lane 1'
       },
       {
@@ -92,7 +105,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         status: 'Completed',
         date: formatDay(0),
         time: '11:20:00 AM',
-        timestamp: new Date().toISOString(),
+        timestamp: getTimestamp(0, 11, 20),
         cashier: 'Staff Lane 1'
       },
       {
@@ -113,7 +126,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         status: 'Preparing',
         date: formatDay(0),
         time: '12:05:00 PM',
-        timestamp: new Date().toISOString(),
+        timestamp: getTimestamp(0, 12, 5),
         cashier: 'Staff Lane 1'
       }
     ];
@@ -130,8 +143,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.appStore.saveProducts();
 
     // Pre-populate cart with sample item
-    window.appStore.addToCart(window.appStore.products[0], 'Mild Curry');
-    window.appStore.addToCart(window.appStore.products[3], 'Classic Glaze');
+    if (window.appStore.cart.length === 0 && window.appStore.products.length > 3) {
+      window.appStore.addToCart(window.appStore.products[0], 'Mild Curry');
+      window.appStore.addToCart(window.appStore.products[3], 'Classic Glaze');
+    }
+
+    window.appStore.notify('orders-updated', historicalOrders);
+    if (window.DashboardController && typeof window.DashboardController.render === 'function') {
+      window.DashboardController.render();
+    }
   }
 
   // --------------------------------------------------------------------------
