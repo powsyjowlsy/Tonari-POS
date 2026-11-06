@@ -189,51 +189,48 @@
         <section id="view-dashboard" class="app-view-panel active">
           <div class="dashboard-layout">
 
-            <!-- Row 1: KPI Stat Cards -->
-            <div class="dash-section-header">TODAY'S OPERATIONS</div>
-            <div class="dash-kpi-row">
-              <!-- KPI Card 1: Today's Sales -->
-              <div class="dash-kpi-card card-sales">
-                <div class="kpi-card-content">
-                  <div class="kpi-label">TODAY'S SALES</div>
-                  <div id="dash-kpi-sales" class="kpi-value tabular-price">PHP 0.00</div>
-                  <div class="kpi-caption">Gross revenue today</div>
+            <!-- Row 1: KPI Shift Metrics Ledger Strip (Proprietary Architectural Design) -->
+            <div class="dash-section-header">
+              <span>Shift Performance Overview</span>
+              <span class="shift-tag">Station Lane 1 Active</span>
+            </div>
+            <div class="metrics-ledger-strip">
+              <!-- Metric Cell 1: Total Shift Revenue -->
+              <div class="ledger-cell">
+                <div class="cell-top-row">
+                  <span class="cell-label">Total Shift Revenue</span>
+                  <span class="cell-pill pill-settled">Settled</span>
                 </div>
-                <div class="kpi-badge-icon badge-currency">PHP</div>
+                <div id="dash-kpi-sales" class="cell-value tabular-price">PHP 0.00</div>
+                <div class="cell-caption">Net settled register tenders &amp; dine-in</div>
               </div>
 
-              <!-- KPI Card 2: Items Sold Today -->
-              <div class="dash-kpi-card card-items">
-                <div class="kpi-card-content">
-                  <div class="kpi-label">ITEMS SOLD TODAY</div>
-                  <div id="dash-kpi-units" class="kpi-value tabular-price">0 units</div>
-                  <div class="kpi-caption">Merchandise units today</div>
+              <!-- Metric Cell 2: Dishes & Portions Served -->
+              <div class="ledger-cell">
+                <div class="cell-top-row">
+                  <span class="cell-label">Dishes &amp; Portions Served</span>
                 </div>
-                <div class="kpi-badge-icon badge-box">
-                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-                  </svg>
-                </div>
+                <div id="dash-kpi-units" class="cell-value tabular-price">0 units</div>
+                <div class="cell-caption">Bowls, rolls, appetizers &amp; drinks</div>
               </div>
 
-              <!-- KPI Card 3: Completed Transactions -->
-              <div class="dash-kpi-card card-trans">
-                <div class="kpi-card-content">
-                  <div class="kpi-label">TRANSACTIONS</div>
-                  <div id="dash-kpi-trans" class="kpi-value tabular-numbers">0</div>
-                  <div class="kpi-caption">Customer orders today</div>
+              <!-- Metric Cell 3: Fulfilled Guest Tickets -->
+              <div class="ledger-cell">
+                <div class="cell-top-row">
+                  <span class="cell-label">Fulfilled Guest Tickets</span>
                 </div>
-                <div class="kpi-badge-icon badge-tx">TX</div>
+                <div id="dash-kpi-trans" class="cell-value tabular-numbers">0</div>
+                <div class="cell-caption">Paid &amp; finalized counter orders</div>
               </div>
 
-              <!-- KPI Card 4: Low Stock Alert -->
-              <div class="dash-kpi-card card-alert">
-                <div class="kpi-card-content">
-                  <div class="kpi-label">LOW STOCK ALERTS</div>
-                  <div id="dash-kpi-lowstock" class="kpi-value tabular-numbers text-danger">0</div>
-                  <div class="kpi-caption">Needs restock</div>
+              <!-- Metric Cell 4: Inventory Restock Need -->
+              <div class="ledger-cell">
+                <div class="cell-top-row">
+                  <span class="cell-label">Inventory Restock Need</span>
+                  <span id="dash-kpi-stock-pill" class="cell-pill pill-healthy">Optimal</span>
                 </div>
-                <div class="kpi-badge-icon badge-warning">!</div>
+                <div id="dash-kpi-lowstock" class="cell-value tabular-numbers">0</div>
+                <div class="cell-caption">Ingredients at or below reorder level</div>
               </div>
             </div>
 

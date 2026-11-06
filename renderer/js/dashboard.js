@@ -8,6 +8,7 @@ const DashboardController = {
     this.kpiUnitsEl = document.getElementById('dash-kpi-units');
     this.kpiTransEl = document.getElementById('dash-kpi-trans');
     this.kpiLowStockEl = document.getElementById('dash-kpi-lowstock');
+    this.kpiStockPillEl = document.getElementById('dash-kpi-stock-pill');
     this.trendContainer = document.getElementById('dash-trend-bars-container');
     this.trendSummaryEl = document.getElementById('dash-trend-summary-text');
     this.recentActivityTable = document.getElementById('dash-recent-activity-body');
@@ -80,6 +81,15 @@ const DashboardController = {
     }
     if (this.kpiLowStockEl) {
       this.kpiLowStockEl.textContent = `${lowStockCount}`;
+    }
+    if (this.kpiStockPillEl) {
+      if (lowStockCount > 0) {
+        this.kpiStockPillEl.textContent = 'Reorder Needed';
+        this.kpiStockPillEl.className = 'cell-pill pill-reorder';
+      } else {
+        this.kpiStockPillEl.textContent = 'Optimal';
+        this.kpiStockPillEl.className = 'cell-pill pill-healthy';
+      }
     }
   },
 
